@@ -1,0 +1,108 @@
+#edit_toolbar {
+  position: absolute;
+  top: -39px;
+  left: 0px;
+  right: 0px;
+  padding: 5px 0;
+  background-color: #f7f7f7;
+  border-bottom: 1px #ddd solid;
+    -webkit-transition: top 250ms;
+  transition: top 250ms;
+}
+#edit_toolbar.edit_shown {
+  top: 0;
+}
+#edit_row_one/*,
+#edit_row_two*/ {
+  margin: 0 200px;
+}
+#edit_toolbar span {
+  white-space: nowrap;
+}
+/*#edit_toolbar input {
+    background: -webkit-linear-gradient(#ccc, #eee);
+  background: linear-gradient(#ccc, #eee);
+  border: 1px #ddd solid;
+  border-radius: 4px;
+  padding: 2px;
+}*/
+#edit_toolbar button,
+#edit_toolbar select,
+#edit_toolbar input[type="button"] {
+    background: -webkit-linear-gradient(#fff, #eee 10%, #ddd 90%, #ccc);
+  background: linear-gradient(#fff, #eee 10%, #ddd 90%, #ccc);
+  margin: 2px;
+  border: 1px #ccc solid;
+  min-width: 24px;
+  padding: 2px;
+  border-radius: 3px;
+}
+#edit_toolbar button#edit_button_link {
+  text-decoration: underline;
+  color: blue;
+}
+#edit_toolbar button.edit_selected {
+    background-color: #fcc;
+    background: -webkit-linear-gradient(#ccc, #ddd 10%, #eee 90%, #fff);
+  background: linear-gradient(#ccc, #ddd 10%, #eee 90%, #fff);
+}
+#edit_toolbar button.edit_disabled {
+  background: #ddd;
+  color: #999;
+}
+#edit_toolbar button#edit_button_link.edit_disabled {
+  color: #99f;
+}
+#edit_toolbar span.edit_radio_buttons > button {
+  border-left: 0;
+  margin: 0;
+  border-radius: 0;
+}
+#edit_toolbar span.edit_radio_buttons > button:first-child {
+  border-left: 1px #ccc solid;
+  border-radius: 3px 0 0 3px;
+}
+#edit_toolbar span.edit_radio_buttons > button:last-child {
+  border-radius: 0 3px 3px 0;
+}
+#edit_row_one > #edit_chain {
+  display: inline-block;
+}
+/*#edit_row_two {
+  display: none;
+}*/
+.edit_block.edit_current {
+  background-color: #f7fff7;
+}
+.edit_block > :first-child {
+  margin-top: 0;
+}
+#edit_output {
+  white-space: pre-wrap;
+}
+
+body {
+  margin: 100px 200px 0;
+  line-height: 1.25em;
+}
+h1 {
+  margin: 0.5em 0;
+  line-height: 1.25em;
+}
+h2 {
+  margin: 0.5em 0;
+  line-height: 1.25em;
+}
+h3 {
+  margin: 0.5em 0;
+  line-height: 1.25em;
+}
+p {
+  margin: 0.5em 0;
+}
+ul, ol {
+  margin: 0.5em 0;
+}
+li {
+  margin: 0;
+}

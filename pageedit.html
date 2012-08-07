@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" href="pageedit.css"/>
+</head>
+<body>
+
+<div class="edit_block" style="float: left; width: 60%;"><h1><i>L</i>orem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</h1><p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p><p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p></div>
+
+<div class="edit_block" style="margin-left: 65%;"><h3>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</h3><p>Italic: <i>italic</i>, <em>italic</em>.</p><p>Bold: <b>bold</b>, <strong>bold</strong>.</p><p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p><ul><li>Duis aute irure</li><li>dolor in reprehenderit</li><li>in voluptate velit esse cillum</li><li>dolore eu fugiat nulla pariatur.</li></ul></div>
+
+<pre id="edit_output" style="clear: both; margin-top: 2em;"></pre>
+
+<div id="edit_toolbar">
+<div id="edit_row_one">
+<select id="edit_node_name" onchange="edit.nodeNameAction();">
+  <option value="h1">Heading 1</option>
+  <option value="h2">Heading 2</option>
+  <option value="h3">Heading 3</option>
+  <option value="p">Paragraph</option>
+  <!-- <option value="ul">List</option> -->
+</select>
+<span>
+  <button onclick="edit.action('bold', null)" style="font-weight: bold;">B</button>
+  <button onclick="edit.action('italic', null)" style="font-style: italic;">I</button>
+  <button onclick="edit.action('underline', null)" style="text-decoration: underline;">U</button>
+</span>
+<!-- <span style="display: none;">
+  <button onclick="edit.action('formatblock', '<h1>')">h1</button>
+  <button onclick="edit.action('formatblock', '<h2>')">h2</button>
+  <button onclick="edit.action('formatblock', '<h3>')">h3</button>
+  <button onclick="edit.action('formatblock', '<p>')">p</button>
+</span> -->
+<span class="edit_radio_buttons"
+  ><button onclick="edit.action('justifyleft', null)">L</button
+  ><button onclick="edit.action('justifycenter', null)">C</button
+  ><button onclick="edit.action('justifyright', null)">R</button
+  ><button onclick="edit.action('justifyfull', null)">F</button
+></span>
+<span>
+  <button id="edit_button_link" onclick="edit.linkAction();">a</button>
+</span>
+<span class="edit_radio_buttons"
+  ><button onclick="edit.listAction(edit.U_LIST);">&bullet;</button
+  ><button onclick="edit.listAction(edit.O_LIST);">#</button
+></span>
+<div id="edit_chain"></div>
+<button onclick="edit.output();">output</button>
+</div><!-- #edit_row_one -->
+<!-- <input type="button" onclick="button1()" value="button 1"/>
+<input type="button" onclick="button2()" value="button 2"/>
+<input type="button" onclick="button3()" value="button 3"/>
+<input type="button" onclick="button4()" value="button 4"/>
+<input type="button" onclick="button5()" value="button 5"/>
+<input type="button" onclick="button6()" value="button 6"/>-->
+<!-- <div id="edit_row_two">
+<input size="1" id="currentSelector" readonly=""/>
+
+<select id="fontFamilyValue" onchange="setCSS(getCurrentSelector(), 'fontFamily', this.value);">
+  <option value="sans-serif">Sans Serif</option>
+  <option value="serif">Serif</option>
+</select>
+
+<select id="colorValue" onchange="setCSS(getCurrentSelector(), 'color', this.value);">
+  <option value="rgb(0, 0, 0)">Black</option>
+  <option value="rgb(204, 0, 0)">Red</option>
+  <option value="rgb(0, 204, 0)">Green</option>
+  <option value="rgb(0, 0, 204)">Blue</option>
+</select>
+
+<input type="button" onclick="var p = this.nextSibling; p.value=parseFloat(p.value,10) - 0.25; p.onchange();" value="&minus;"/><input size="2" id="marginTopValue" onchange="setCSS(getCurrentSelector(), 'marginTop', this.value + 'em');"/><input type="button" onclick="var p = this.previousSibling; p.value=parseFloat(p.value,10) + 0.25; p.onchange();" value="&plus;"/>
+
+<input type="button" onclick="var p = this.nextSibling; p.value=parseFloat(p.value,10) - 0.25; p.onchange();" value="&minus;"/><input size="2" id="marginBottomValue" onchange="setCSS(getCurrentSelector(), 'marginBottom', this.value + 'em');"/><input type="button" onclick="var p = this.previousSibling; p.value=parseFloat(p.value,10) + 0.25; p.onchange();" value="&plus;"/>
+
+<input type="button" onclick="var p = this.nextSibling; p.value=(parseFloat(p.value,10) - 0.05).toFixed(2); p.onchange();" value="&minus;"/><input size="2" id="lineHeightValue" onchange="setCSS(getCurrentSelector(), 'lineHeight', this.value + 'em');"/><input type="button" onclick="var p = this.previousSibling; p.value=(parseFloat(p.value,10) + 0.05).toFixed(2); p.onchange();" value="&plus;"/>
+</div> --><!-- #edit_row_two -->
+</div><!-- #edit_toolbar -->
+<script src="shim.js"></script>
+<script src="serialize.js"></script>
+<script src="pageedit.js"></script>
+</body>
+</html>
