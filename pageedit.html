@@ -79,5 +79,13 @@
 <script src="shim.js"></script>
 <script src="serialize.js"></script>
 <script src="pageedit.js"></script>
+<script>
+
+edit.linkCallback = function(aRangeText) {
+  alert(aRangeText);
+  return 'about:blank';
+};
+
+</script>
 </body>
 </html>

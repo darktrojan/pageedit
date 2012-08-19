@@ -238,7 +238,13 @@ function linkAction() {
       range.moveToElementText(node);
     action('unlink', null);
   } else {
-    action('createlink', 'about:blank');
+    var href;
+    if (typeof edit.linkCallback == 'function')
+      href = edit.linkCallback('text' in range ? range.text : range.toString());
+    else
+      href = prompt('Type or paste a link:');
+    if (href)
+      action('createlink', href);
   }
 }
 
