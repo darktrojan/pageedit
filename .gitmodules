@@ -1,0 +1,3 @@
+[submodule "shim"]
+	path = shim
+	url = git@github.com:darktrojan/shim.js.git
