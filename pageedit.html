@@ -76,7 +76,7 @@
 <input type="button" onclick="var p = this.nextSibling; p.value=(parseFloat(p.value,10) - 0.05).toFixed(2); p.onchange();" value="&minus;"/><input size="2" id="lineHeightValue" onchange="setCSS(getCurrentSelector(), 'lineHeight', this.value + 'em');"/><input type="button" onclick="var p = this.previousSibling; p.value=(parseFloat(p.value,10) + 0.05).toFixed(2); p.onchange();" value="&plus;"/>
 </div> --><!-- #edit_row_two -->
 </div><!-- #edit_toolbar -->
-<script src="shim.js"></script>
+<!--[if IE 8]><script src="shim/shim.js"></script><![endif]-->
 <script src="serialize.js"></script>
 <script src="pageedit.js"></script>
 <script>
