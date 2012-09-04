@@ -13,7 +13,46 @@ var LINK = i++, U_LIST = i++, O_LIST = i++;
 var CLASS_EDIT_BLOCK = 'edit_block', CLASS_SHOWN = 'edit_shown', CLASS_CURRENT = 'edit_current';
 var CLASS_SELECTED = 'edit_selected', CLASS_DISABLED = 'edit_disabled';
 
-var toolbar = document.getElementById('edit_toolbar');
+var toolbar = document.createElement('div');
+toolbar.id = 'edit_toolbar';
+toolbar.innerHTML =
+  '<div id="edit_row_one">' +
+    '<select id="edit_node_name" onchange="edit.nodeNameAction();">' +
+      '<option value="h1">Heading 1</option>' +
+      '<option value="h2">Heading 2</option>' +
+      '<option value="h3">Heading 3</option>' +
+      '<option value="p">Paragraph</option>' +
+      //'<option value="ul">List</option>' +
+    '</select>' +
+    '<span>' +
+      '<button onclick="edit.action(\'bold\', null)" style="font-weight: bold;">B</button>' +
+      '<button onclick="edit.action(\'italic\', null)" style="font-style: italic;">I</button>' +
+      '<button onclick="edit.action(\'underline\', null)" style="text-decoration: underline;">U</button>' +
+    '</span>' +
+    // '<span style="display: none;">' +
+    //   '<button onclick="edit.action(\'formatblock\', \'<h1>\')">h1</button>' +
+    //   '<button onclick="edit.action(\'formatblock\', \'<h2>\')">h2</button>' +
+    //   '<button onclick="edit.action(\'formatblock\', \'<h3>\')">h3</button>' +
+    //   '<button onclick="edit.action(\'formatblock\', \'<p>\')">p</button>' +
+    // '</span>' +
+    '<span class="edit_radio_buttons">' +
+      '<button onclick="edit.action(\'justifyleft\', null)">L</button>' +
+      '<button onclick="edit.action(\'justifycenter\', null)">C</button>' +
+      '<button onclick="edit.action(\'justifyright\', null)">R</button>' +
+      '<button onclick="edit.action(\'justifyfull\', null)">F</button>' +
+    '</span>' +
+    '<span>' +
+      '<button id="edit_button_link" onclick="edit.linkAction();">a</button>' +
+    '</span>' +
+    '<span class="edit_radio_buttons">' +
+      '<button onclick="edit.listAction(edit.U_LIST);">&bullet;</button>' +
+      '<button onclick="edit.listAction(edit.O_LIST);">#</button>' +
+    '</span>' +
+    '<div id="edit_chain"></div>' +
+    '<button onclick="edit.output();">output</button>' +
+  '</div>'; // #edit_row_one
+document.body.appendChild(toolbar);
+
 var chain_display = document.getElementById('edit_chain');
 var nodeNameSelect = document.getElementById('edit_node_name');
 var range;

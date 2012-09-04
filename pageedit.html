@@ -12,26 +12,26 @@
 
 <pre id="edit_output" style="clear: both; margin-top: 2em;"></pre>
 
-<div id="edit_toolbar">
+<!-- <div id="edit_toolbar">
 <div id="edit_row_one">
 <select id="edit_node_name" onchange="edit.nodeNameAction();">
   <option value="h1">Heading 1</option>
   <option value="h2">Heading 2</option>
   <option value="h3">Heading 3</option>
   <option value="p">Paragraph</option>
-  <!-- <option value="ul">List</option> -->
+   --><!-- <option value="ul">List</option> --><!-- 
 </select>
 <span>
   <button onclick="edit.action('bold', null)" style="font-weight: bold;">B</button>
   <button onclick="edit.action('italic', null)" style="font-style: italic;">I</button>
   <button onclick="edit.action('underline', null)" style="text-decoration: underline;">U</button>
 </span>
-<!-- <span style="display: none;">
+ --><!-- <span style="display: none;">
   <button onclick="edit.action('formatblock', '<h1>')">h1</button>
   <button onclick="edit.action('formatblock', '<h2>')">h2</button>
   <button onclick="edit.action('formatblock', '<h3>')">h3</button>
   <button onclick="edit.action('formatblock', '<p>')">p</button>
-</span> -->
+</span> --><!-- 
 <span class="edit_radio_buttons"
   ><button onclick="edit.action('justifyleft', null)">L</button
   ><button onclick="edit.action('justifycenter', null)">C</button
@@ -47,7 +47,7 @@
 ></span>
 <div id="edit_chain"></div>
 <button onclick="edit.output();">output</button>
-</div><!-- #edit_row_one -->
+</div> --><!-- #edit_row_one -->
 <!-- <input type="button" onclick="button1()" value="button 1"/>
 <input type="button" onclick="button2()" value="button 2"/>
 <input type="button" onclick="button3()" value="button 3"/>
@@ -75,7 +75,7 @@
 
 <input type="button" onclick="var p = this.nextSibling; p.value=(parseFloat(p.value,10) - 0.05).toFixed(2); p.onchange();" value="&minus;"/><input size="2" id="lineHeightValue" onchange="setCSS(getCurrentSelector(), 'lineHeight', this.value + 'em');"/><input type="button" onclick="var p = this.previousSibling; p.value=(parseFloat(p.value,10) + 0.05).toFixed(2); p.onchange();" value="&plus;"/>
 </div> --><!-- #edit_row_two -->
-</div><!-- #edit_toolbar -->
+<!-- </div> --><!-- #edit_toolbar -->
 <!--[if IE 8]><script src="shim/shim.js"></script><![endif]-->
 <script src="serialize.js"></script>
 <script src="pageedit.js"></script>

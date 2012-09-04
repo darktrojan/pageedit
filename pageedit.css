@@ -53,6 +53,9 @@
 #edit_toolbar button#edit_button_link.edit_disabled {
   color: #99f;
 }
+#edit_toolbar span.edit_radio_buttons {
+  margin: 2px;
+}
 #edit_toolbar span.edit_radio_buttons > button {
   border-left: 0;
   margin: 0;
