@@ -6,7 +6,6 @@ var blocksNotLists = ['h1', 'h2', 'h3', 'p'];
 
 var i = 0;
 var BOLD = i++, ITALIC = i++, UNDERLINE = i++;
-//var HEADING_1 = i++, HEADING_2 = i++, HEADING_3 = i++, PARAGRAPH = i++;
 var LEFT = i++, CENTER = i++, RIGHT = i++, JUSTIFY = i++;
 var LINK = i++, U_LIST = i++, O_LIST = i++;
 var IM_FLOAT_LEFT = i++, IM_CENTER = i++, IM_FLOAT_RIGHT = i++;
@@ -23,19 +22,12 @@ toolbar.innerHTML =
       '<option value="h2">Heading 2</option>' +
       '<option value="h3">Heading 3</option>' +
       '<option value="p">Paragraph</option>' +
-      //'<option value="ul">List</option>' +
     '</select>' +
     '<span>' +
       '<button onclick="edit.action(\'bold\', null)" style="font-weight: bold;">B</button>' +
       '<button onclick="edit.action(\'italic\', null)" style="font-style: italic;">I</button>' +
       '<button onclick="edit.action(\'underline\', null)" style="text-decoration: underline;">U</button>' +
     '</span>' +
-    // '<span style="display: none;">' +
-    //   '<button onclick="edit.action(\'formatblock\', \'<h1>\')">h1</button>' +
-    //   '<button onclick="edit.action(\'formatblock\', \'<h2>\')">h2</button>' +
-    //   '<button onclick="edit.action(\'formatblock\', \'<h3>\')">h3</button>' +
-    //   '<button onclick="edit.action(\'formatblock\', \'<p>\')">p</button>' +
-    // '</span>' +
     '<span class="edit_radio_buttons">' +
       '<button onclick="edit.action(\'justifyleft\', null)">L</button>' +
       '<button onclick="edit.action(\'justifycenter\', null)">C</button>' +
@@ -86,8 +78,6 @@ document.documentElement.addEventListener('click', function(event) {
   }
   edit.relocateUI(null);
 }, false);
-
-//setCurrentSelector('p');
 
 function setContentEditable(div) {
   div.setAttribute('onfocus', 'edit.relocateUI(this);');
@@ -233,31 +223,22 @@ function updateUI() {
   nodeNameSelect.classList.add(CLASS_DISABLED);
   switch (blockNode.localName) {
   case 'h1':
-    //buttons[HEADING_1].classList.add(CLASS_SELECTED);
     nodeNameSelect.value = 'h1';
-    //setCurrentSelector('h1');
     break;
   case 'h2':
-    //buttons[HEADING_2].classList.add(CLASS_SELECTED);
     nodeNameSelect.value = 'h2';
-    //setCurrentSelector('h2');
     break;
   case 'h3':
-    //buttons[HEADING_3].classList.add(CLASS_SELECTED);
     nodeNameSelect.value = 'h3';
-    //setCurrentSelector('h3');
     break;
   case 'ul':
   case 'ol':
     nodeNameSelect.value = 'p';
     nodeNameSelect.disabled = true;
-    //setCurrentSelector('li');
     break;
   case 'p':
   default:
-    //buttons[PARAGRAPH].classList.add(CLASS_SELECTED);
     nodeNameSelect.value = 'p';
-    //setCurrentSelector('p');
     break;
   }
   switch (alignment) {
@@ -473,17 +454,7 @@ function restoreSelection() {
     a.removeAllRanges();
     a.addRange(range);
     currentDiv.focus();
-    //var node = range.startContainer;
-  //  while (node) {
-    //  if (node.localName == 'div') {
-      //  if (node.classList.contains(CLASS_EDIT_BLOCK)) {
-        //  node.focus();
-          setTimeout(updateUI, 0);
-        //}
-        //return;
-      //}
-      //node = node.parentNode;
-    //}
+    setTimeout(updateUI, 0);
   } else {
     range.select();
     setTimeout(updateUI, 0);
@@ -495,80 +466,6 @@ function output() {
   var o = document.getElementById('edit_output');
   o.textContent = serialize(currentDiv, false);
 }
-/*
-var defaults = {
-  'fontFamily': 'serif',
-  'color': 'rgb(0, 0, 0)',
-  'marginTop': '0.5em',
-  'marginBottom': '0.5em',
-  'lineHeight': '1.25em'
-};
-
-function button1() {
-  setCSS(getCurrentSelector(), 'marginTop', '0.5em');
-  setCSS(getCurrentSelector(), 'marginBottom', '0.5em');
-}
-
-function button2() {
-  setCSS(getCurrentSelector(), 'marginTop', '1em');
-  setCSS(getCurrentSelector(), 'marginBottom', '1em');
-}
-
-function button3() {
-  setCSS(getCurrentSelector(), 'lineHeight', '1.15em');
-}
-
-function button4() {
-  setCSS(getCurrentSelector(), 'lineHeight', '1.5em');
-}
-
-function button5() {
-  setCurrentSelector(getCurrentSelector());
-}
-
-function setCSS(selector, property, value) {
-  var stylesheet = document.styleSheets[0];
-
-  var rule;
-  for (var i = 0; i < stylesheet.cssRules.length; i++) {
-    if (stylesheet.cssRules[i].selectorText == selector) {
-      rule = stylesheet.cssRules[i];
-      break;
-    }
-  }
-  if (!rule) {
-    var index = stylesheet.insertRule(selector + '{}', i);
-    rule = stylesheet.cssRules[index];
-  }
-  rule.style[property] = value;
-}
-
-function getCSS(selector, property) {
-  var stylesheet = document.styleSheets[0];
-
-  var rule;
-  for (var i = 0; i < stylesheet.cssRules.length; i++) {
-    if (stylesheet.cssRules[i].selectorText == selector) {
-      rule = stylesheet.cssRules[i];
-      return rule.style[property] || defaults[property];
-    }
-  }
-  return defaults[property];
-}
-
-function getCurrentSelector() {
-  return document.getElementById('currentSelector').value;
-}
-
-function setCurrentSelector(selector) {
-  document.getElementById('currentSelector').value = selector;
-  document.getElementById('fontFamilyValue').value = getCSS(selector, 'fontFamily');
-  document.getElementById('colorValue').value = getCSS(selector, 'color');
-  document.getElementById('marginTopValue').value = getCSS(selector, 'marginTop');
-  document.getElementById('marginBottomValue').value = getCSS(selector, 'marginBottom');
-  document.getElementById('lineHeightValue').value = getCSS(selector, 'lineHeight');
-}
-*/
 
 edit.U_LIST = U_LIST;
 edit.O_LIST = O_LIST;
