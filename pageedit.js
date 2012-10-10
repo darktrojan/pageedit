@@ -9,6 +9,7 @@ var BOLD = i++, ITALIC = i++, UNDERLINE = i++;
 //var HEADING_1 = i++, HEADING_2 = i++, HEADING_3 = i++, PARAGRAPH = i++;
 var LEFT = i++, CENTER = i++, RIGHT = i++, JUSTIFY = i++;
 var LINK = i++, U_LIST = i++, O_LIST = i++;
+var IM_FLOAT_LEFT = i++, IM_CENTER = i++, IM_FLOAT_RIGHT = i++;
 
 var CLASS_EDIT_BLOCK = 'edit_block', CLASS_SHOWN = 'edit_shown', CLASS_CURRENT = 'edit_current';
 var CLASS_SELECTED = 'edit_selected', CLASS_DISABLED = 'edit_disabled';
@@ -45,8 +46,13 @@ toolbar.innerHTML =
       '<button id="edit_button_link" onclick="edit.linkAction();">a</button>' +
     '</span>' +
     '<span class="edit_radio_buttons">' +
-      '<button onclick="edit.listAction(edit.U_LIST);">&bullet;</button>' +
+      '<button onclick="edit.listAction(edit.U_LIST);">&#x2022;</button>' +
       '<button onclick="edit.listAction(edit.O_LIST);">#</button>' +
+    '</span>' +
+    '<span class="edit_radio_buttons">' +
+      '<button onclick="edit.imageAlignAction(\'alignleft\');">L</button>' +
+      '<button onclick="edit.imageAlignAction(\'aligncenter\');">C</button>' +
+      '<button onclick="edit.imageAlignAction(\'alignright\');">R</button>' +
     '</span>' +
     '<div id="edit_chain"></div>' +
     '<button onclick="edit.output();">output</button>' +
@@ -86,7 +92,27 @@ document.documentElement.addEventListener('click', function(event) {
 function setContentEditable(div) {
   div.setAttribute('onfocus', 'edit.relocateUI(this);');
   div.ondblclick = div.onclick = div.onkeyup = updateUI;
+  div.ondragenter = div.ondrop = onDragOver;
   div.contentEditable = true;
+}
+
+function onDragOver(event) {
+  var hasFiles = event.dataTransfer.files && event.dataTransfer.files.length;
+  if (hasFiles)
+    event.preventDefault();
+
+  // var isHTML = event.dataTransfer.types.contains('text/html');
+  // if (isHTML) {
+  //   var htmlContent = event.dataTransfer.getData('text/html');
+  //   if (htmlContent.indexOf('<img') >= 0)
+  //     event.preventDefault();
+  // }
+
+  // var o = document.getElementById('edit_output');
+  // o.textContent = '';
+  // for (var i = 0; i < event.dataTransfer.types.length; i++) {
+  //   o.textContent += event.dataTransfer.types[i] + '\n';
+  // }
 }
 
 function relocateUI(div) {
@@ -126,6 +152,7 @@ function updateUI() {
   }
 
   var chain = [];
+  var image = node.localName == 'img';
   var bold = false;
   var italic = false;
   var underline = false;
@@ -167,10 +194,25 @@ function updateUI() {
     alignment = (blockNode.style && blockNode.style.textAlign) || blockNode.align || 'left';
   chain_display.textContent += ' [' + blockNode.localName + ', ' + alignment + ']';
 
+  if (image) {
+    for (var i = 0; i < IM_FLOAT_LEFT; i++) {
+      buttons[i].classList.remove(CLASS_SELECTED);
+      buttons[i].classList.add(CLASS_DISABLED);
+    }
+    buttons[IM_FLOAT_LEFT].classList.remove(CLASS_DISABLED);
+    buttons[IM_CENTER].classList.remove(CLASS_DISABLED);
+    buttons[IM_FLOAT_RIGHT].classList.remove(CLASS_DISABLED);
+    return;
+  }
+
   for (var i = 0; i < buttons.length; i++) {
     buttons[i].classList.remove(CLASS_SELECTED);
     buttons[i].classList.remove(CLASS_DISABLED);
   }
+
+  buttons[IM_FLOAT_LEFT].classList.add(CLASS_DISABLED);
+  buttons[IM_CENTER].classList.add(CLASS_DISABLED);
+  buttons[IM_FLOAT_RIGHT].classList.add(CLASS_DISABLED);
 
   if (r.collapsed ||
     ('compareEndPoints' in r && r.compareEndPoints('StartToEnd', r) == 0)) {
@@ -365,6 +407,30 @@ function listAction(listType) {
   updateUI();
 }
 
+function imageAlignAction(className) {
+  var node;
+  if ('getSelection' in window) {
+    var a = window.getSelection();
+    if (!a.rangeCount)
+      return;
+    var r = a.getRangeAt(0);
+    node = r.startContainer;
+    if (node.nodeType == 1)
+      node = node.childNodes[r.startOffset];
+    else if (node.nodeType == 3 && r.startOffset == node.length && node.nextSibling)
+      node = node.nextSibling;
+    else if (node.childNodes.length == 1)
+      node = node.firstChild;
+  }
+  if (!node || node.localName != 'img')
+    return;
+
+  node.classList.remove('alignleft');
+  node.classList.remove('aligncenter');
+  node.classList.remove('alignright');
+  node.classList.add(className);
+}
+
 function getBlockNodeForSelection() {
   var node;
   if ('startContainer' in range) {
@@ -510,6 +576,7 @@ edit.action = action;
 edit.linkAction = linkAction;
 edit.listAction = listAction;
 edit.nodeNameAction = nodeNameAction;
+edit.imageAlignAction = imageAlignAction;
 edit.output = output;
 edit.relocateUI = relocateUI;
 })();

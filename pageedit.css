@@ -1,5 +1,5 @@
 #edit_toolbar {
-  position: absolute;
+  position: fixed;
   top: -39px;
   left: 0px;
   right: 0px;
@@ -108,4 +108,16 @@ ul, ol {
 }
 li {
   margin: 0;
+}
+img.alignleft {
+  float: left;
+  margin: 0 1em 1em 0;
+}
+img.aligncenter {
+  display: block;
+  margin: 0 auto 1em;
+}
+img.alignright {
+  float: right;
+  margin: 0 0 1em 1em;
 }
