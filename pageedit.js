@@ -142,7 +142,7 @@ function updateUI() {
   }
 
   var chain = [];
-  var image = node.localName == 'img';
+  var image = !!node && node.localName == 'img';
   var bold = false;
   var italic = false;
   var underline = false;
