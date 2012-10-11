@@ -8,10 +8,12 @@ var i = 0;
 var BOLD = i++, ITALIC = i++, UNDERLINE = i++;
 var LEFT = i++, CENTER = i++, RIGHT = i++, JUSTIFY = i++;
 var LINK = i++, U_LIST = i++, O_LIST = i++;
+var IMAGE = i++;
 var IM_FLOAT_LEFT = i++, IM_CENTER = i++, IM_FLOAT_RIGHT = i++;
 
 var CLASS_EDIT_BLOCK = 'edit_block', CLASS_SHOWN = 'edit_shown', CLASS_CURRENT = 'edit_current';
 var CLASS_SELECTED = 'edit_selected', CLASS_DISABLED = 'edit_disabled';
+var CLASS_ALIGN_LEFT = 'alignleft', CLASS_ALIGN_CENTER = 'aligncenter', CLASS_ALIGN_RIGHT = 'alignright';
 
 var toolbar = document.createElement('div');
 toolbar.id = 'edit_toolbar';
@@ -40,6 +42,9 @@ toolbar.innerHTML =
     '<span class="edit_radio_buttons">' +
       '<button onclick="edit.listAction(edit.U_LIST);">&#x2022;</button>' +
       '<button onclick="edit.listAction(edit.O_LIST);">#</button>' +
+    '</span>' +
+    '<span>' +
+      '<button onclick="edit.imageAction();">im</button>' +
     '</span>' +
     '<span class="edit_radio_buttons">' +
       '<button onclick="edit.imageAlignAction(\'alignleft\');">L</button>' +
@@ -141,6 +146,7 @@ function updateUI() {
     node = r2.parentElement();
   }
 
+  var leafNode = node;
   var chain = [];
   var image = !!node && node.localName == 'img';
   var bold = false;
@@ -192,6 +198,22 @@ function updateUI() {
     buttons[IM_FLOAT_LEFT].classList.remove(CLASS_DISABLED);
     buttons[IM_CENTER].classList.remove(CLASS_DISABLED);
     buttons[IM_FLOAT_RIGHT].classList.remove(CLASS_DISABLED);
+
+    if (leafNode.classList.contains(CLASS_ALIGN_LEFT))
+      buttons[IM_FLOAT_LEFT].classList.add(CLASS_SELECTED);
+    else
+      buttons[IM_FLOAT_LEFT].classList.remove(CLASS_SELECTED);
+
+    if (leafNode.classList.contains(CLASS_ALIGN_CENTER))
+      buttons[IM_CENTER].classList.add(CLASS_SELECTED);
+    else
+      buttons[IM_CENTER].classList.remove(CLASS_SELECTED);
+
+    if (leafNode.classList.contains(CLASS_ALIGN_RIGHT))
+      buttons[IM_FLOAT_RIGHT].classList.add(CLASS_SELECTED);
+    else
+      buttons[IM_FLOAT_RIGHT].classList.remove(CLASS_SELECTED);
+
     return;
   }
 
@@ -388,6 +410,22 @@ function listAction(listType) {
   updateUI();
 }
 
+function imageAction() {
+  var href;
+  if (typeof edit.imageCallback == 'function')
+    href = edit.imageCallback();
+  else
+    href = 'chiefs.png';
+  if (href) {
+    var block = getBlockNodeForSelection();
+    var newBlock = document.createElement('div');
+    var image = document.createElement('img');
+    image.setAttribute('src', href);
+    newBlock.appendChild(image);
+    block.parentNode.insertBefore(newBlock, block);
+  }
+}
+
 function imageAlignAction(className) {
   var node;
   if ('getSelection' in window) {
@@ -406,9 +444,9 @@ function imageAlignAction(className) {
   if (!node || node.localName != 'img')
     return;
 
-  node.classList.remove('alignleft');
-  node.classList.remove('aligncenter');
-  node.classList.remove('alignright');
+  node.classList.remove(CLASS_ALIGN_LEFT);
+  node.classList.remove(CLASS_ALIGN_CENTER);
+  node.classList.remove(CLASS_ALIGN_RIGHT);
   node.classList.add(className);
 }
 
@@ -472,6 +510,7 @@ edit.O_LIST = O_LIST;
 edit.action = action;
 edit.linkAction = linkAction;
 edit.listAction = listAction;
+edit.imageAction = imageAction;
 edit.nodeNameAction = nodeNameAction;
 edit.imageAlignAction = imageAlignAction;
 edit.output = output;
