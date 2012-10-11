@@ -1,5 +1,5 @@
 var noEndTag = ['br', 'hr', 'img', 'input', 'link', 'meta'];
-// var blocks = ['h1', 'h2', 'h3', 'p', 'ol', 'ul'];
+// var blocks = ['div', 'h1', 'h2', 'h3', 'p', 'ol', 'ul'];
 
 function serialize(node, outer) {
   if (node.nodeType != 1)
@@ -18,8 +18,11 @@ function serialize(node, outer) {
       return str + '/>';
     str += '>';
   }
-  for (var i = 0; i < node.childNodes.length; i++) {
-    str += serialize(node.childNodes[i], true);
+
+  if (!node._placeholder) {
+    for (var i = 0; i < node.childNodes.length; i++) {
+      str += serialize(node.childNodes[i], true);
+    }
   }
 
   if (outer) {

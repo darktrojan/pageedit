@@ -60,6 +60,7 @@ var chain_display = document.getElementById('edit_chain');
 var nodeNameSelect = document.getElementById('edit_node_name');
 var range;
 var currentDiv = null;
+var outputDiv = document.getElementById('edit_output');
 
 nodeNameSelect.onmousedown = saveSelection;
 var buttons = toolbar.querySelectorAll('button');
@@ -85,10 +86,25 @@ document.documentElement.addEventListener('click', function(event) {
 }, false);
 
 function setContentEditable(div) {
-  div.setAttribute('onfocus', 'edit.relocateUI(this);');
   div.ondblclick = div.onclick = div.onkeyup = updateUI;
   div.ondragenter = div.ondrop = onDragOver;
   div.contentEditable = true;
+  div.onfocus = function () {
+    relocateUI(this);
+  };
+  div.onblur = function () {
+    if (div.textContent == '') {
+      div.innerHTML = '<p>Edit this text</p>';
+      div._placeholder = div.firstChild;
+    } else if (div.textContent == 'Edit this text') {
+      div._placeholder = div.firstChild;
+    }
+  };
+
+  if (div.textContent == '') {
+    div.innerHTML = '<p>Edit this text</p>';
+    div._placeholder = div.firstChild;
+  }
 }
 
 function onDragOver(event) {
@@ -119,6 +135,20 @@ function relocateUI(div) {
   range = null;
   if (currentDiv) {
     currentDiv.classList.add(CLASS_CURRENT);
+    if (currentDiv._placeholder) {
+      if ('createRange' in document) {
+        var selection = window.getSelection();
+        var range = document.createRange();
+        range.selectNodeContents(currentDiv._placeholder);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      } else {
+        var range = document.selection.createRange();
+        range.moveToElementText(currentDiv._placeholder);
+        range.select();
+      }
+      currentDiv._placeholder = null;
+    }
     toolbar.classList.add(CLASS_SHOWN);
   } else {
     toolbar.classList.remove(CLASS_SHOWN);
@@ -501,8 +531,7 @@ function restoreSelection() {
 
 function output() {
   if (!currentDiv) return;
-  var o = document.getElementById('edit_output');
-  o.textContent = serialize(currentDiv, false);
+  outputDiv.textContent = serialize(currentDiv, false);
 }
 
 edit.U_LIST = U_LIST;
