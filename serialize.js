@@ -3,7 +3,7 @@ var noEndTag = ['br', 'hr', 'img', 'input', 'link', 'meta'];
 
 function serialize(node, outer) {
   if (node.nodeType != 1)
-    return node.nodeValue;
+    return escapeHTML(node.nodeValue);
 
   str = '';
   if (outer) {
