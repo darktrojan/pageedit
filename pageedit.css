@@ -8,12 +8,10 @@
   border-bottom: 1px #ddd solid;
     -webkit-transition: top 250ms;
   transition: top 250ms;
+  text-align: center;
 }
 #edit_toolbar.edit_shown {
   top: 0;
-}
-#edit_row_one {
-  margin: 0 200px;
 }
 #edit_toolbar span {
   white-space: nowrap;
@@ -29,7 +27,16 @@
   padding: 2px;
   border-radius: 3px;
 }
-#edit_toolbar button#edit_button_link {
+button#edit_bold {
+  font-weight: bold;
+}
+button#edit_italic {
+  font-style: italic;
+}
+button#edit_underline {
+  text-decoration: underline;
+}
+button#edit_link {
   text-decoration: underline;
   color: blue;
 }
@@ -60,8 +67,10 @@
 #edit_toolbar span.edit_radio_buttons > button:last-child {
   border-radius: 0 3px 3px 0;
 }
-#edit_row_one > #edit_chain {
+#edit_chain {
   display: inline-block;
+  width: 20em;
+  text-align: right;
 }
 .edit_block > :first-child {
   margin-top: 0;

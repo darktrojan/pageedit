@@ -15,59 +15,119 @@ var CLASS_EDIT_BLOCK = 'edit_block', CLASS_SHOWN = 'edit_shown', CLASS_CURRENT =
 var CLASS_SELECTED = 'edit_selected', CLASS_DISABLED = 'edit_disabled';
 var CLASS_ALIGN_LEFT = 'alignleft', CLASS_ALIGN_CENTER = 'aligncenter', CLASS_ALIGN_RIGHT = 'alignright';
 
-var toolbar = document.createElement('div');
-toolbar.id = 'edit_toolbar';
-toolbar.innerHTML =
-  '<div id="edit_row_one">' +
-    '<select id="edit_node_name" onchange="edit.nodeNameAction();">' +
-      '<option value="h1">Heading 1</option>' +
-      '<option value="h2">Heading 2</option>' +
-      '<option value="h3">Heading 3</option>' +
-      '<option value="p">Paragraph</option>' +
-    '</select>' +
-    '<span>' +
-      '<button onclick="edit.action(\'bold\', null)" style="font-weight: bold;">B</button>' +
-      '<button onclick="edit.action(\'italic\', null)" style="font-style: italic;">I</button>' +
-      '<button onclick="edit.action(\'underline\', null)" style="text-decoration: underline;">U</button>' +
-    '</span>' +
-    '<span class="edit_radio_buttons">' +
-      '<button onclick="edit.action(\'justifyleft\', null)">L</button>' +
-      '<button onclick="edit.action(\'justifycenter\', null)">C</button>' +
-      '<button onclick="edit.action(\'justifyright\', null)">R</button>' +
-      '<button onclick="edit.action(\'justifyfull\', null)">F</button>' +
-    '</span>' +
-    '<span>' +
-      '<button id="edit_button_link" onclick="edit.linkAction();">a</button>' +
-    '</span>' +
-    '<span class="edit_radio_buttons">' +
-      '<button onclick="edit.listAction(edit.U_LIST);">&#x2022;</button>' +
-      '<button onclick="edit.listAction(edit.O_LIST);">#</button>' +
-    '</span>' +
-    '<span>' +
-      '<button onclick="edit.imageAction();">im</button>' +
-    '</span>' +
-    '<span class="edit_radio_buttons">' +
-      '<button onclick="edit.imageAlignAction(\'alignleft\');">L</button>' +
-      '<button onclick="edit.imageAlignAction(\'aligncenter\');">C</button>' +
-      '<button onclick="edit.imageAlignAction(\'alignright\');">R</button>' +
-    '</span>' +
-    '<div id="edit_chain"></div>' +
-    '<button onclick="edit.output();">output</button>' +
-  '</div>'; // #edit_row_one
-document.body.appendChild(toolbar);
+var ToolbarUI = {
+  element: null,
+  nodeNameSelect: null,
+  buttons: null,
+  chain_display: null,
 
-var chain_display = document.getElementById('edit_chain');
-var nodeNameSelect = document.getElementById('edit_node_name');
+  init: function() {
+    this.element = document.body.append('div#edit_toolbar');
+
+    this.nodeNameSelect = this.element.append('select#edit_node_name');
+    this.nodeNameSelect.append('option', 'Heading 1', { 'value': 'h1' });
+    this.nodeNameSelect.append('option', 'Heading 2', { 'value': 'h2' });
+    this.nodeNameSelect.append('option', 'Heading 3', { 'value': 'h3' });
+    this.nodeNameSelect.append('option', 'Paragraph', { 'value': 'p' });
+
+    var group = this.element.append('span');
+    group.append('button#edit_bold', 'B');
+    group.append('button#edit_italic', 'I');
+    group.append('button#edit_underline', 'U');
+
+    group = this.element.append('span.edit_radio_buttons');
+    group.append('button#edit_justifyleft', 'L');
+    group.append('button#edit_justifycenter', 'C');
+    group.append('button#edit_justifyright', 'R');
+    group.append('button#edit_justifyfull', 'F');
+
+    group = this.element.append('span');
+    group.append('button#edit_link', 'a');
+
+    group = this.element.append('span.edit_radio_buttons');
+    group.append('button#edit_ulist', '\u2022');
+    group.append('button#edit_olist', '#');
+
+    group = this.element.append('span');
+    group.append('button#edit_image', 'im');
+
+    group = this.element.append('span.edit_radio_buttons');
+    group.append('button#edit_im_alignleft', 'L');
+    group.append('button#edit_im_aligncenter', 'C');
+    group.append('button#edit_im_alignright', 'R');
+
+    this.chain_display = this.element.append('div#edit_chain');
+
+    this.element.addEventListener('change', function(aEvent) {
+      if (aEvent.target.id == 'edit_node_name') {
+        nodeNameAction();
+      }
+    }, false);
+    this.element.addEventListener('click', function(aEvent) {
+      switch (aEvent.target.id) {
+      case 'edit_bold':
+      case 'edit_italic':
+      case 'edit_underline':
+      case 'edit_justifyleft':
+      case 'edit_justifycenter':
+      case 'edit_justifyright':
+      case 'edit_justifyfull':
+        return action(aEvent.target.id.substring(5), null);
+      case 'edit_link':
+        return linkAction();
+      case 'edit_ulist':
+        return listAction(U_LIST);
+      case 'edit_olist':
+        return listAction(O_LIST);
+      case 'edit_image':
+        return imageAction();
+      case 'edit_im_alignleft':
+      case 'edit_im_aligncenter':
+      case 'edit_im_alignright':
+        return imageAlignAction(aEvent.target.id.substring(8));
+      }
+    }, false);
+
+    this.nodeNameSelect.onmousedown = saveSelection;
+    this.buttons = ToolbarUI.element.querySelectorAll('button');
+    for (var i = 0; i < this.buttons.length; i++) {
+      this.buttons[i].onmousedown = saveSelection;
+      this.buttons[i].onmouseup = restoreSelection;
+    }
+  },
+  show: function() {
+    this.element.classList.add(CLASS_SHOWN);
+  },
+  hide: function() {
+    this.element.classList.remove(CLASS_SHOWN);
+  },
+  setNodeName: function(aNodeName) {
+    this.nodeNameSelect.selectedIndex = -1;
+    for (var i = 0; i < this.nodeNameSelect.options.length; i++) {
+      if (this.nodeNameSelect.options[i].value == aNodeName) {
+        this.nodeNameSelect.selectedIndex = i;
+      }
+    }
+  },
+  setButtonState: function(aButton, aSelected, aDisabled) {
+    var classList = this.buttons[aButton].classList;
+    classList[aSelected ? 'add' : 'remove'](CLASS_SELECTED);
+    classList[aDisabled ? 'add' : 'remove'](CLASS_DISABLED);
+  },
+  setChain: function(aText, aBold, aItalic, aUnderline, aLink) {
+    this.chain_display.textContent = aText;
+    this.chain_display.style.fontWeight = aBold ? 'bold' : 'normal';
+    this.chain_display.style.fontStyle = aItalic ? 'italic' : 'normal';
+    this.chain_display.style.textDecoration = aUnderline ? 'underline' : 'none';
+    this.chain_display.style.color = aLink ? 'blue' : '';
+  }
+};
+ToolbarUI.init();
+
 var range;
 var currentDiv = null;
 var outputDiv = document.getElementById('edit_output');
 
-nodeNameSelect.onmousedown = saveSelection;
-var buttons = toolbar.querySelectorAll('button');
-for (var i = 0; i < buttons.length; i++) {
-  buttons[i].onmousedown = saveSelection;
-  buttons[i].onmouseup = restoreSelection;
-}
 var editables = document.getElementsByClassName(CLASS_EDIT_BLOCK);
 for (var i = 0; i < editables.length; i++) {
   setContentEditable(editables[i]);
@@ -84,17 +144,17 @@ document.documentElement.addEventListener('click', function(event) {
     }
     element = element.parentNode;
   }
-  edit.relocateUI(null);
+  relocateUI(null);
 }, false);
 
 function setContentEditable(div) {
   div.ondblclick = div.onclick = div.onkeyup = updateUI;
   div.ondragenter = div.ondrop = onDragOver;
   div.contentEditable = true;
-  div.onfocus = function () {
+  div.onfocus = function() {
     relocateUI(this);
   };
-  div.onblur = function () {
+  div.onblur = function() {
     if (div.textContent == '') {
       div.innerHTML = '<p>Edit this text</p>';
       div._placeholder = div.firstChild;
@@ -151,14 +211,13 @@ function relocateUI(div) {
       }
       currentDiv._placeholder = null;
     }
-    toolbar.classList.add(CLASS_SHOWN);
+    ToolbarUI.show();
   } else {
-    toolbar.classList.remove(CLASS_SHOWN);
+    ToolbarUI.hide();
   }
 }
 
 function updateUI() {
-  chain_display.textContent = '';
   var node;
   if ('getSelection' in window) {
     var a = window.getSelection();
@@ -218,40 +277,27 @@ function updateUI() {
 
   // console.log([collapsed, leafNode, blockNode, bold, italic, underline, alignment, link, uList, oList, image]);
 
-  chain_display.textContent = chain.reverse().join(' > ') +
-    ' [' + blockNode.localName + ', ' + alignment + ']';
-  chain_display.style.fontWeight = bold ? 'bold' : 'normal';
-  chain_display.style.fontStyle = italic ? 'italic' : 'normal';
-  chain_display.style.textDecoration = underline ? 'underline' : 'none';
-  chain_display.style.color = link ? 'blue' : '';
+  ToolbarUI.setChain(
+    chain.reverse().join(' > ') + ' [' + blockNode.localName + ', ' + alignment + ']',
+    bold, italic, underline, link
+  );
 
-  function setButton(aButton, aSelected, aDisabled) {
-    var classList = buttons[aButton].classList;
-    classList[aSelected ? 'add' : 'remove'](CLASS_SELECTED);
-    classList[aDisabled ? 'add' : 'remove'](CLASS_DISABLED);
-  }
+  ToolbarUI.setButtonState(BOLD, bold, collapsed);
+  ToolbarUI.setButtonState(ITALIC, italic, collapsed);
+  ToolbarUI.setButtonState(UNDERLINE, underline, collapsed);
+  ToolbarUI.setButtonState(LEFT, alignment == 'left', image);
+  ToolbarUI.setButtonState(CENTER, alignment == 'center', image);
+  ToolbarUI.setButtonState(RIGHT, alignment == 'right', image);
+  ToolbarUI.setButtonState(JUSTIFY, alignment == 'justify', image);
+  ToolbarUI.setButtonState(LINK, link, (image || collapsed) && !link);
+  ToolbarUI.setButtonState(U_LIST, uList, image);
+  ToolbarUI.setButtonState(O_LIST, oList, image);
+  ToolbarUI.setButtonState(IMAGE, false, image);
+  ToolbarUI.setButtonState(IM_FLOAT_LEFT, image && leafNode.classList.contains(CLASS_ALIGN_LEFT), !image);
+  ToolbarUI.setButtonState(IM_CENTER, image && leafNode.classList.contains(CLASS_ALIGN_CENTER), !image);
+  ToolbarUI.setButtonState(IM_FLOAT_RIGHT, image && leafNode.classList.contains(CLASS_ALIGN_RIGHT), !image);
 
-  setButton(BOLD, bold, collapsed);
-  setButton(ITALIC, italic, collapsed);
-  setButton(UNDERLINE, underline, collapsed);
-  setButton(LEFT, alignment == 'left', image);
-  setButton(CENTER, alignment == 'center', image);
-  setButton(RIGHT, alignment == 'right', image);
-  setButton(JUSTIFY, alignment == 'justify', image);
-  setButton(LINK, link, (image || collapsed) && !link);
-  setButton(U_LIST, uList, image);
-  setButton(O_LIST, oList, image);
-  setButton(IMAGE, false, image);
-  setButton(IM_FLOAT_LEFT, image && leafNode.classList.contains(CLASS_ALIGN_LEFT), !image);
-  setButton(IM_CENTER, image && leafNode.classList.contains(CLASS_ALIGN_CENTER), !image);
-  setButton(IM_FLOAT_RIGHT, image && leafNode.classList.contains(CLASS_ALIGN_RIGHT), !image);
-
-  nodeNameSelect.selectedIndex = -1;
-  for (var i = 0; i < nodeNameSelect.options.length; i++) {
-    if (nodeNameSelect.options[i].value == blockNode.localName) {
-      nodeNameSelect.selectedIndex = i;
-    }
-  }
+  ToolbarUI.setNodeName(blockNode.localName);
 }
 
 function action(command, value) {
@@ -267,13 +313,13 @@ function nodeNameAction() {
     range.selectNodeContents(blockNode);
   else
     range.moveToElementText(blockNode);
-  action('formatblock', '<' + nodeNameSelect.value + '>');
+  action('formatblock', '<' + ToolbarUI.nodeNameSelect.value + '>');
   currentDiv.focus();
   updateUI();
 }
 
 function linkAction() {
-  var button = buttons[LINK];
+  var button = ToolbarUI.buttons[LINK];
   if (button.classList.contains(CLASS_SELECTED)) {
     var node = range.startContainer;
     if (node.nodeType == 3 && range.startOffset == node.length && node.nextSibling) {
@@ -312,9 +358,9 @@ function linkAction() {
 
 function listAction(listType) {
   var currentListType = null;
-  if (buttons[U_LIST].classList.contains(CLASS_SELECTED))
+  if (ToolbarUI.buttons[U_LIST].classList.contains(CLASS_SELECTED))
     currentListType = U_LIST;
-  else if (buttons[O_LIST].classList.contains(CLASS_SELECTED))
+  else if (ToolbarUI.buttons[O_LIST].classList.contains(CLASS_SELECTED))
     currentListType = O_LIST;
 
   var blockNode = getBlockNodeForSelection();
@@ -488,16 +534,6 @@ function output() {
   outputDiv.textContent = serialize(currentDiv, false);
 }
 
-edit.U_LIST = U_LIST;
-edit.O_LIST = O_LIST;
-edit.action = action;
-edit.linkAction = linkAction;
-edit.listAction = listAction;
-edit.imageAction = imageAction;
-edit.nodeNameAction = nodeNameAction;
-edit.imageAlignAction = imageAlignAction;
-edit.output = output;
-edit.relocateUI = relocateUI;
 edit.restoreSelection = restoreSelection;
 edit.getBlockNodeForSelection = getBlockNodeForSelection;
 })();
