@@ -77,7 +77,9 @@ document.documentElement.addEventListener('click', function(event) {
   var element = event.target || event.srcElement;
   while (element) {
     if (element.nodeType == 1 &&
-        (element.classList.contains(CLASS_EDIT_BLOCK) || element.id == 'edit_toolbar')) {
+        (element.classList.contains(CLASS_EDIT_BLOCK) ||
+        element.id == 'edit_toolbar' ||
+        element.id == 'darkbox-b')) {
       return;
     }
     element = element.parentNode;
@@ -175,138 +177,80 @@ function updateUI() {
     var r2 = r.duplicate();
     node = r2.parentElement();
   }
+  if (!node)
+    return;
 
-  var leafNode = node;
+  var collapsed = r.collapsed ||
+    ('compareEndPoints' in r && r.compareEndPoints('StartToEnd', r) == 0);
   var chain = [];
-  var image = !!node && node.localName == 'img';
+  var leafNode = node.nodeType == 1 ? node : null;
+  var blockNode = null;
   var bold = false;
   var italic = false;
   var underline = false;
   var link = false;
   var uList = false;
   var oList = false;
-  var blockNode = null;
-  var alignment = null;
-  while (node) {
-    var name = node.localName;
-    if (node.nodeType == 3) name = '#text';//(' + node.length + ')';
-    if (node.id) name += '#' + node.id;
-    if (node.classList) for (var i = 0; i < node.classList.length; i++) name += '.' + node.classList[i];
+  var image = node.nodeType == 1 && node.localName == 'img';
+
+  do {
+    var name;
     if (node.nodeType == 1) {
+      name = node.localName;
+      if (node.id) name += '#' + node.id;
+      if (node.classList) for (var i = 0; i < node.classList.length; i++) name += '.' + node.classList[i];
       if (node.localName == 'b' || node.localName == 'strong' || node.style.fontWeight == 'bold') bold = true;
       if (node.localName == 'i' || node.localName == 'em' || node.style.fontStyle == 'italic') italic = true;
       if (node.localName == 'u' || node.style.textDecoration == 'underline') underline = true;
       if (node.localName == 'a') link = true;
       if (node.localName == 'ul') uList = true;
       if (node.localName == 'ol') oList = true;
-      if (node.localName == 'div' && node.classList.contains(CLASS_EDIT_BLOCK)) {
-        chain_display.textContent = chain.reverse().join(' > ');
-        chain_display.style.fontWeight = bold ? 'bold' : 'normal';
-        chain_display.style.fontStyle = italic ? 'italic' : 'normal';
-        chain_display.style.textDecoration = underline ? 'underline' : 'none';
-        chain_display.style.color = link ? 'blue' : '';
-        break;
-      }
-      if (!alignment && blocks.indexOf(node.localName) >= 0)
-        alignment = (node.style && node.style.textAlign) || node.align || null;
+    } else if (node.nodeType == 3) {
+      name = '#text';//(' + node.length + ')';
     }
+
     chain.push(name);
     blockNode = node;
     node = node.parentNode;
-  }
-  if (!blockNode)
-    return;
-  if (!alignment)
-    alignment = (blockNode.style && blockNode.style.textAlign) || blockNode.align || 'left';
-  chain_display.textContent += ' [' + blockNode.localName + ', ' + alignment + ']';
+  } while (node && !node.classList.contains(CLASS_EDIT_BLOCK));
 
-  if (image) {
-    for (var i = 0; i < IM_FLOAT_LEFT; i++) {
-      buttons[i].classList.remove(CLASS_SELECTED);
-      buttons[i].classList.add(CLASS_DISABLED);
+  var alignment = (blockNode.style && blockNode.style.textAlign) || blockNode.align || 'left';
+
+  // console.log([collapsed, leafNode, blockNode, bold, italic, underline, alignment, link, uList, oList, image]);
+
+  chain_display.textContent = chain.reverse().join(' > ') +
+    ' [' + blockNode.localName + ', ' + alignment + ']';
+  chain_display.style.fontWeight = bold ? 'bold' : 'normal';
+  chain_display.style.fontStyle = italic ? 'italic' : 'normal';
+  chain_display.style.textDecoration = underline ? 'underline' : 'none';
+  chain_display.style.color = link ? 'blue' : '';
+
+  function setButton(aButton, aSelected, aDisabled) {
+    var classList = buttons[aButton].classList;
+    classList[aSelected ? 'add' : 'remove'](CLASS_SELECTED);
+    classList[aDisabled ? 'add' : 'remove'](CLASS_DISABLED);
+  }
+
+  setButton(BOLD, bold, collapsed);
+  setButton(ITALIC, italic, collapsed);
+  setButton(UNDERLINE, underline, collapsed);
+  setButton(LEFT, alignment == 'left', image);
+  setButton(CENTER, alignment == 'center', image);
+  setButton(RIGHT, alignment == 'right', image);
+  setButton(JUSTIFY, alignment == 'justify', image);
+  setButton(LINK, link, (image || collapsed) && !link);
+  setButton(U_LIST, uList, image);
+  setButton(O_LIST, oList, image);
+  setButton(IMAGE, false, image);
+  setButton(IM_FLOAT_LEFT, image && leafNode.classList.contains(CLASS_ALIGN_LEFT), !image);
+  setButton(IM_CENTER, image && leafNode.classList.contains(CLASS_ALIGN_CENTER), !image);
+  setButton(IM_FLOAT_RIGHT, image && leafNode.classList.contains(CLASS_ALIGN_RIGHT), !image);
+
+  nodeNameSelect.selectedIndex = -1;
+  for (var i = 0; i < nodeNameSelect.options.length; i++) {
+    if (nodeNameSelect.options[i].value == blockNode.localName) {
+      nodeNameSelect.selectedIndex = i;
     }
-    buttons[IM_FLOAT_LEFT].classList.remove(CLASS_DISABLED);
-    buttons[IM_CENTER].classList.remove(CLASS_DISABLED);
-    buttons[IM_FLOAT_RIGHT].classList.remove(CLASS_DISABLED);
-
-    if (leafNode.classList.contains(CLASS_ALIGN_LEFT))
-      buttons[IM_FLOAT_LEFT].classList.add(CLASS_SELECTED);
-    else
-      buttons[IM_FLOAT_LEFT].classList.remove(CLASS_SELECTED);
-
-    if (leafNode.classList.contains(CLASS_ALIGN_CENTER))
-      buttons[IM_CENTER].classList.add(CLASS_SELECTED);
-    else
-      buttons[IM_CENTER].classList.remove(CLASS_SELECTED);
-
-    if (leafNode.classList.contains(CLASS_ALIGN_RIGHT))
-      buttons[IM_FLOAT_RIGHT].classList.add(CLASS_SELECTED);
-    else
-      buttons[IM_FLOAT_RIGHT].classList.remove(CLASS_SELECTED);
-
-    return;
-  }
-
-  for (var i = 0; i < buttons.length; i++) {
-    buttons[i].classList.remove(CLASS_SELECTED);
-    buttons[i].classList.remove(CLASS_DISABLED);
-  }
-
-  buttons[IM_FLOAT_LEFT].classList.add(CLASS_DISABLED);
-  buttons[IM_CENTER].classList.add(CLASS_DISABLED);
-  buttons[IM_FLOAT_RIGHT].classList.add(CLASS_DISABLED);
-
-  if (r.collapsed ||
-    ('compareEndPoints' in r && r.compareEndPoints('StartToEnd', r) == 0)) {
-    buttons[BOLD].classList.add(CLASS_DISABLED);
-    buttons[ITALIC].classList.add(CLASS_DISABLED);
-    buttons[UNDERLINE].classList.add(CLASS_DISABLED);
-    if (!link)
-      buttons[LINK].classList.add(CLASS_DISABLED);
-  }
-  if (bold) buttons[BOLD].classList.add(CLASS_SELECTED);
-  if (italic) buttons[ITALIC].classList.add(CLASS_SELECTED);
-  if (underline) buttons[UNDERLINE].classList.add(CLASS_SELECTED);
-  if (link) buttons[LINK].classList.add(CLASS_SELECTED);
-  if (uList) buttons[U_LIST].classList.add(CLASS_SELECTED);
-  if (oList) buttons[O_LIST].classList.add(CLASS_SELECTED);
-
-  nodeNameSelect.disabled = false;
-  nodeNameSelect.classList.add(CLASS_DISABLED);
-  switch (blockNode.localName) {
-  case 'h1':
-    nodeNameSelect.value = 'h1';
-    break;
-  case 'h2':
-    nodeNameSelect.value = 'h2';
-    break;
-  case 'h3':
-    nodeNameSelect.value = 'h3';
-    break;
-  case 'ul':
-  case 'ol':
-    nodeNameSelect.value = 'p';
-    nodeNameSelect.disabled = true;
-    break;
-  case 'p':
-  default:
-    nodeNameSelect.value = 'p';
-    break;
-  }
-  switch (alignment) {
-  case 'center':
-    buttons[CENTER].classList.add(CLASS_SELECTED);
-    break;
-  case 'right':
-    buttons[RIGHT].classList.add(CLASS_SELECTED);
-    break;
-  case 'justify':
-    buttons[JUSTIFY].classList.add(CLASS_SELECTED);
-    break;
-  case 'left':
-  default:
-    buttons[LEFT].classList.add(CLASS_SELECTED);
-    break;
   }
 }
 
@@ -354,7 +298,11 @@ function linkAction() {
   } else {
     var href;
     if (typeof edit.linkCallback == 'function')
-      href = edit.linkCallback('text' in range ? range.text : range.toString());
+      href = edit.linkCallback('text' in range ? range.text : range.toString(),
+        function(aHref) {
+          restoreSelection();
+          action('createlink', aHref);
+        });
     else
       href = prompt('Type or paste a link:');
     if (href)
@@ -394,7 +342,7 @@ function listAction(listType) {
         blockNode = list;
         break;
       }
-      if (list.localName == 'div' && list.classList.contains(CLASS_EDIT_BLOCK)) {
+      if (list.classList.contains(CLASS_EDIT_BLOCK)) {
         break;
       }
     }
@@ -441,18 +389,24 @@ function listAction(listType) {
 }
 
 function imageAction() {
-  var href;
-  if (typeof edit.imageCallback == 'function')
-    href = edit.imageCallback();
-  else
-    href = 'chiefs.png';
-  if (href) {
+  function callbackCallback(aHref) {
     var block = getBlockNodeForSelection();
     var newBlock = document.createElement('div');
     var image = document.createElement('img');
-    image.setAttribute('src', href);
+    image.setAttribute('src', aHref);
     newBlock.appendChild(image);
     block.parentNode.insertBefore(newBlock, block);
+  }
+  var href;
+  if (typeof edit.imageCallback == 'function')
+    href = edit.imageCallback(function(aHref) {
+      restoreSelection();
+      callbackCallback(aHref);
+    });
+  else
+    href = 'chiefs.png';
+  if (href) {
+    callbackCallback(href);
   }
 }
 
@@ -493,7 +447,7 @@ function getBlockNodeForSelection() {
   }
   var blockNode = null;
   while (node) {
-    if (node.localName == 'div' && node.classList.contains(CLASS_EDIT_BLOCK))
+    if (node.nodeType == 1 && node.classList.contains(CLASS_EDIT_BLOCK))
       break;
     blockNode = node;
     node = node.parentNode;
@@ -544,4 +498,6 @@ edit.nodeNameAction = nodeNameAction;
 edit.imageAlignAction = imageAlignAction;
 edit.output = output;
 edit.relocateUI = relocateUI;
+edit.restoreSelection = restoreSelection;
+edit.getBlockNodeForSelection = getBlockNodeForSelection;
 })();

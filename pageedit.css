@@ -12,20 +12,12 @@
 #edit_toolbar.edit_shown {
   top: 0;
 }
-#edit_row_one/*,
-#edit_row_two*/ {
+#edit_row_one {
   margin: 0 200px;
 }
 #edit_toolbar span {
   white-space: nowrap;
 }
-/*#edit_toolbar input {
-    background: -webkit-linear-gradient(#ccc, #eee);
-  background: linear-gradient(#ccc, #eee);
-  border: 1px #ddd solid;
-  border-radius: 4px;
-  padding: 2px;
-}*/
 #edit_toolbar button,
 #edit_toolbar select,
 #edit_toolbar input[type="button"] {
@@ -71,53 +63,9 @@
 #edit_row_one > #edit_chain {
   display: inline-block;
 }
-/*#edit_row_two {
-  display: none;
-}*/
-.edit_block.edit_current {
-  background-color: #f7fff7;
-}
 .edit_block > :first-child {
   margin-top: 0;
 }
 #edit_output {
   white-space: pre-wrap;
-}
-
-body {
-  margin: 100px 200px 0;
-  line-height: 1.25em;
-}
-h1 {
-  margin: 0.5em 0;
-  line-height: 1.25em;
-}
-h2 {
-  margin: 0.5em 0;
-  line-height: 1.25em;
-}
-h3 {
-  margin: 0.5em 0;
-  line-height: 1.25em;
-}
-p {
-  margin: 0.5em 0;
-}
-ul, ol {
-  margin: 0.5em 0;
-}
-li {
-  margin: 0;
-}
-img.alignleft {
-  float: left;
-  margin: 0 1em 1em 0;
-}
-img.aligncenter {
-  display: block;
-  margin: 0 auto 1em;
-}
-img.alignright {
-  float: right;
-  margin: 0 0 1em 1em;
 }
