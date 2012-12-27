@@ -1,5 +1,3 @@
-var edit = {};
-
 (function() {
 var blocks = ['h1', 'h2', 'h3', 'p', 'ul', 'ol', 'div', 'li'];
 
@@ -21,6 +19,7 @@ var ToolbarUI = {
 		this.nodeNameSelect.append('option', 'Heading 2', { 'value': 'h2' });
 		this.nodeNameSelect.append('option', 'Heading 3', { 'value': 'h3' });
 		this.nodeNameSelect.append('option', 'Paragraph', { 'value': 'p' });
+		this.nodeNameSelect.onmousedown = Edit.saveSelection;
 
 		var group = this.element.append('span');
 		this.addButton(group, 'bold', 'B');
@@ -79,8 +78,6 @@ var ToolbarUI = {
 				return Actions.imageAlignAction(id.substring(8));
 			}
 		}, false);
-
-		this.nodeNameSelect.onmousedown = saveSelection;
 	},
 	show: function() {
 		this.element.classList.add(CLASS_SHOWN);
@@ -90,8 +87,8 @@ var ToolbarUI = {
 	},
 	addButton: function(aGroup, aName, aText) {
 		var button = aGroup.append('button#edit_' + aName, aText);
-		button.onmousedown = saveSelection;
-		button.onmouseup = restoreSelection;
+		button.onmousedown = Edit.saveSelection;
+		button.onmouseup = Edit.restoreSelection;
 		this.buttons[aName] = button;
 	},
 	setNodeName: function(aNodeName) {
@@ -115,52 +112,51 @@ var ToolbarUI = {
 		this.chain_display.style.color = aLink ? 'blue' : '';
 	}
 };
-ToolbarUI.init();
 
 var Actions = {
 	action: function(aCommand, aValue) {
-		if (!currentDiv) return;
+		if (!Edit.currentBlock) return;
 		document.execCommand(aCommand, false, aValue);
 	},
 	nodeNameAction: function() {
-		var blockNode = getBlockNodeForSelection();
+		var blockNode = Edit.getBlockNodeForSelection();
 		if (!blockNode)
 			return;
-		if ('selectNodeContents' in range)
-			range.selectNodeContents(blockNode);
+		if ('selectNodeContents' in Edit.savedRange)
+			Edit.savedRange.selectNodeContents(blockNode);
 		else
-			range.moveToElementText(blockNode);
+			Edit.savedRange.moveToElementText(blockNode);
 		this.action('formatblock', '<' + ToolbarUI.nodeNameSelect.value + '>');
-		currentDiv.focus();
-		updateUI();
+		Edit.currentBlock.focus();
+		Edit.updateUI();
 	},
 	linkAction: function() {
-		var button = ToolbarUI.buttons[LINK];
+		var button = ToolbarUI.buttons['link'];
 		if (button.classList.contains(CLASS_SELECTED)) {
-			var node = range.startContainer;
-			if (node.nodeType == 3 && range.startOffset == node.length && node.nextSibling) {
+			var node = Edit.savedRange.startContainer;
+			if (node.nodeType == 3 && Edit.savedRange.startOffset == node.length && node.nextSibling) {
 				node = node.nextSibling;
 			}
 			if (node.childNodes.length == 1) {
 				node = node.firstChild;
 			}
 			if (node.nodeType == 1) {
-				node = node.childNodes[range.startOffset];
+				node = node.childNodes[Edit.savedRange.startOffset];
 			}
 			while (node) {
 				if (node.nodeType == 1 && node.localName == 'a')
 					break;
 				node = node.parentNode;
 			}
-			if ('selectNode' in range)
-				range.selectNode(node);
+			if ('selectNode' in Edit.savedRange)
+				Edit.savedRange.selectNode(node);
 			else
-				range.moveToElementText(node);
+				Edit.savedRange.moveToElementText(node);
 			this.action('unlink', null);
 		} else {
 			var href;
-			if (typeof edit.linkCallback == 'function')
-				href = edit.linkCallback('text' in range ? range.text : range.toString(),
+			if (typeof Edit.linkCallback == 'function')
+				href = Edit.linkCallback('text' in Edit.savedRange ? Edit.savedRange.text : Edit.savedRange.toString(),
 					function(aHref) {
 						restoreSelection();
 						Actions.action('createlink', aHref);
@@ -178,23 +174,23 @@ var Actions = {
 		else if (ToolbarUI.buttons.olist.classList.contains(CLASS_SELECTED))
 			currentListType = 'ol';
 
-		var blockNode = getBlockNodeForSelection();
+		var blockNode = Edit.getBlockNodeForSelection();
 		if (!blockNode)
 			return;
 
 		if (!currentListType) {
 			this.action(aListType == 'ul' ? 'insertUnorderedList' : 'insertOrderedList', null);
-			updateUI();
+			Edit.updateUI();
 			return;
 		}
 
 		var list;
-		if ('startContainer' in range) {
-			list = range.startContainer;
+		if ('startContainer' in Edit.savedRange) {
+			list = Edit.savedRange.startContainer;
 			if (list.nodeType == 1)
-				list = list.childNodes[range.startOffset];
+				list = list.childNodes[Edit.savedRange.startOffset];
 		} else {
-			var r2 = range.duplicate();
+			var r2 = Edit.savedRange.duplicate();
 			list = r2.parentElement();
 		}
 		while (list) {
@@ -213,7 +209,7 @@ var Actions = {
 
 		if (currentListType == aListType) { // already a list, remove
 			var next = blockNode.nextSibling;
-			range.setStartAfter(blockNode);
+			Edit.savedRange.setStartAfter(blockNode);
 			for (var i = 0; i < blockNode.childElementCount; i++) {
 				var li = blockNode.children[i];
 				var p = document.createElement('p');
@@ -222,14 +218,14 @@ var Actions = {
 					if ((!parent.classList.contains(CLASS_EDIT_BLOCK)) ||
 							(n.nodeType == 1 && blocks.indexOf(n.localName) >= 0)) {
 						parent.insertBefore(n, next);
-						range.setEndAfter(n);
+						Edit.savedRange.setEndAfter(n);
 					} else {
 						p.appendChild(n);
 					}
 				}
 				if (p.childNodes.length) {
 					parent.insertBefore(p, next);
-					range.setEndAfter(p);
+					Edit.savedRange.setEndAfter(p);
 				}
 			}
 			parent.removeChild(blockNode);
@@ -241,16 +237,16 @@ var Actions = {
 				newList.appendChild(li);
 			}
 			parent.replaceChild(newList, blockNode);
-			if ('selectNode' in range)
-				range.selectNode(newList);
+			if ('selectNode' in Edit.savedRange)
+				Edit.savedRange.selectNode(newList);
 			else
-				range.moveToElementText(newList);
+				Edit.savedRange.moveToElementText(newList);
 		}
-		updateUI();
+		Edit.updateUI();
 	},
 	imageAction: function() {
 		function callbackCallback(aHref) {
-			var block = getBlockNodeForSelection();
+			var block = Edit.getBlockNodeForSelection();
 			var newBlock = document.createElement('div');
 			var image = document.createElement('img');
 			image.setAttribute('src', aHref);
@@ -258,8 +254,8 @@ var Actions = {
 			block.parentNode.insertBefore(newBlock, block);
 		}
 		var href;
-		if (typeof edit.imageCallback == 'function')
-			href = edit.imageCallback(function(aHref) {
+		if (typeof Edit.imageCallback == 'function')
+			href = Edit.imageCallback(function(aHref) {
 				restoreSelection();
 				callbackCallback(aHref);
 			});
@@ -271,15 +267,12 @@ var Actions = {
 	},
 	imageAlignAction: function(aClassName) {
 		var node;
+		var range = Edit.getRange();
 		if ('getSelection' in window) {
-			var a = window.getSelection();
-			if (!a.rangeCount)
-				return;
-			var r = a.getRangeAt(0);
-			node = r.startContainer;
+			node = range.startContainer;
 			if (node.nodeType == 1)
-				node = node.childNodes[r.startOffset];
-			else if (node.nodeType == 3 && r.startOffset == node.length && node.nextSibling)
+				node = node.childNodes[range.startOffset];
+			else if (node.nodeType == 3 && range.startOffset == node.length && node.nextSibling)
 				node = node.nextSibling;
 			else if (node.childNodes.length == 1)
 				node = node.firstChild;
@@ -294,17 +287,214 @@ var Actions = {
 	}
 };
 
-var range;
-var currentDiv = null;
-var outputDiv = document.getElementById('edit_output');
+var Edit = {
+	currentBlock: null,
+	savedRange: null,
 
-var editables = document.getElementsByClassName(CLASS_EDIT_BLOCK);
-for (var i = 0; i < editables.length; i++) {
-	setContentEditable(editables[i]);
-}
+	Actions: Actions,
+	ToolbarUI: ToolbarUI,
 
-document.documentElement.addEventListener('click', function(event) {
-	var element = event.target || event.srcElement;
+	setContentEditable: function(aBlock) {
+		function onDragOver(aEvent) {
+			var hasFiles = aEvent.dataTransfer.files && aEvent.dataTransfer.files.length;
+			if (hasFiles)
+				aEvent.preventDefault();
+
+			// var isHTML = aEvent.dataTransfer.types.contains('text/html');
+			// if (isHTML) {
+			//   var htmlContent = aEvent.dataTransfer.getData('text/html');
+			//   if (htmlContent.indexOf('<img') >= 0)
+			//     aEvent.preventDefault();
+			// }
+
+			// var o = document.getElementById('edit_output');
+			// o.textContent = '';
+			// for (var i = 0; i < aEvent.dataTransfer.types.length; i++) {
+			//   o.textContent += aEvent.dataTransfer.types[i] + '\n';
+			// }
+		}
+
+		aBlock.classList.add(CLASS_EDIT_BLOCK);
+		aBlock.ondblclick = aBlock.onclick = aBlock.onkeyup = Edit.updateUI;
+		aBlock.ondragenter = aBlock.ondrop = onDragOver;
+		aBlock.contentEditable = true;
+		aBlock.onfocus = function() {
+			Edit.setCurrentBlock(this);
+		};
+		aBlock.onblur = function() {
+			if (aBlock.textContent == '') {
+				aBlock.innerHTML = '<p>Edit this text</p>';
+				aBlock._placeholder = aBlock.firstChild;
+			} else if (aBlock.textContent == 'Edit this text') {
+				aBlock._placeholder = aBlock.firstChild;
+			}
+		};
+
+		if (aBlock.textContent == '') {
+			aBlock.innerHTML = '<p>Edit this text</p>';
+			aBlock._placeholder = aBlock.firstChild;
+		}
+	},
+	setCurrentBlock: function(aDiv) {
+		if (aDiv == this.currentBlock)
+			return;
+		if (this.currentBlock)
+			this.currentBlock.classList.remove(CLASS_CURRENT);
+		this.currentBlock = aDiv;
+		this.range = null;
+		if (this.currentBlock) {
+			this.currentBlock.classList.add(CLASS_CURRENT);
+			// if (this.currentBlock._placeholder) {
+			// 	if ('createRange' in document) {
+			// 		var selection = window.getSelection();
+			// 		var range = document.createRange();
+			// 		range.selectNodeContents(this.currentBlock._placeholder);
+			// 		selection.removeAllRanges();
+			// 		selection.addRange(range);
+			// 	} else {
+			// 		var range = document.selection.createRange();
+			// 		range.moveToElementText(this.currentBlock._placeholder);
+			// 		range.select();
+			// 	}
+			// 	this.currentBlock._placeholder = null;
+			// }
+			ToolbarUI.show();
+		} else {
+			ToolbarUI.hide();
+		}
+	},
+	updateUI: function() {
+		var node, collapsed;
+		var range = Edit.getRange();
+		if ('getSelection' in window) {
+			node = range.startContainer;
+			if (node.nodeType == 1)
+				node = node.childNodes[range.startOffset];
+			else if (node.nodeType == 3 && range.startOffset == node.length && node.nextSibling)
+				node = node.nextSibling;
+			else if (node.childNodes.length == 1)
+				node = node.firstChild;
+			collapsed = range.collapsed;
+		} else {
+			// var r2 = range.duplicate();
+			node = range.parentElement();
+			collapsed = range.compareEndPoints('StartToEnd', range) == 0;
+		}
+		if (!node)
+			return;
+
+		var chain = [];
+		var leafNode = node.nodeType == 1 ? node : null;
+		var blockNode = null;
+		var bold = false;
+		var italic = false;
+		var underline = false;
+		var link = false;
+		var uList = false;
+		var oList = false;
+		var image = node.nodeType == 1 && node.localName == 'img';
+
+		do {
+			var name;
+			if (node.nodeType == 1) {
+				name = node.localName;
+				if (node.id) name += '#' + node.id;
+				if (node.classList) for (var i = 0; i < node.classList.length; i++) name += '.' + node.classList[i];
+				if (node.localName == 'b' || node.localName == 'strong' || node.style.fontWeight == 'bold') bold = true;
+				if (node.localName == 'i' || node.localName == 'em' || node.style.fontStyle == 'italic') italic = true;
+				if (node.localName == 'u' || node.style.textDecoration == 'underline') underline = true;
+				if (node.localName == 'a') link = true;
+				if (node.localName == 'ul') uList = true;
+				if (node.localName == 'ol') oList = true;
+			} else if (node.nodeType == 3) {
+				name = '#text';//(' + node.length + ')';
+			}
+
+			chain.push(name);
+			blockNode = node;
+			node = node.parentNode;
+		} while (node && !node.classList.contains(CLASS_EDIT_BLOCK));
+
+		var alignment = (blockNode.style && blockNode.style.textAlign) || blockNode.align || 'left';
+
+		// console.log([collapsed, leafNode, blockNode, bold, italic, underline, alignment, link, uList, oList, image]);
+
+		ToolbarUI.setChain(
+			chain.reverse().join(' > ') + ' [' + blockNode.localName + ', ' + alignment + ']',
+			bold, italic, underline, link
+		);
+
+		ToolbarUI.setButtonState('bold', bold, collapsed);
+		ToolbarUI.setButtonState('italic', italic, collapsed);
+		ToolbarUI.setButtonState('underline', underline, collapsed);
+		ToolbarUI.setButtonState('justifyleft', alignment == 'left', image);
+		ToolbarUI.setButtonState('justifycenter', alignment == 'center', image);
+		ToolbarUI.setButtonState('justifyright', alignment == 'right', image);
+		ToolbarUI.setButtonState('justifyfull', alignment == 'justify', image);
+		ToolbarUI.setButtonState('link', link, (image || collapsed) && !link);
+		ToolbarUI.setButtonState('ulist', uList, image);
+		ToolbarUI.setButtonState('olist', oList, image);
+		ToolbarUI.setButtonState('image', false, image);
+		ToolbarUI.setButtonState('im_alignleft', image && leafNode.classList.contains(CLASS_ALIGN_LEFT), !image);
+		ToolbarUI.setButtonState('im_aligncenter', image && leafNode.classList.contains(CLASS_ALIGN_CENTER), !image);
+		ToolbarUI.setButtonState('im_alignright', image && leafNode.classList.contains(CLASS_ALIGN_RIGHT), !image);
+
+		ToolbarUI.setNodeName(blockNode.localName);
+	},
+	getBlockNodeForSelection: function() {
+		var node;
+		var range = this.getRange();
+		if ('startContainer' in range) {
+			node = range.startContainer;
+			if (node.nodeType == 1)
+				node = node.childNodes[range.startOffset];
+		} else {
+			if (range.compareEndPoints('StartToEnd', range) == 0)
+				return null;
+			node = range.parentElement();
+		}
+		var blockNode = null;
+		while (node) {
+			if (node.nodeType == 1 && node.classList.contains(CLASS_EDIT_BLOCK))
+				break;
+			blockNode = node;
+			node = node.parentNode;
+		}
+		return blockNode;
+	},
+	getRange: function() {
+		if ('getSelection' in window) {
+			var selection = window.getSelection();
+			if (selection.rangeCount) {
+				return selection.getRangeAt(0);
+			}
+		} else {
+			return document.selection.createRange();
+		}
+	},
+	saveSelection: function() {
+		Edit.savedRange = Edit.getRange();
+	},
+	restoreSelection: function() {
+		if (!Edit.savedRange) {
+			return;
+		}
+		if ('getSelection' in window) {
+			var selection = window.getSelection();
+			selection.removeAllRanges();
+			selection.addRange(Edit.savedRange);
+			Edit.currentBlock.focus();
+			setTimeout(Edit.updateUI, 0);
+		} else {
+			Edit.savedRange.select();
+			setTimeout(Edit.updateUI, 0);
+		}
+	}
+};
+
+ToolbarUI.init();
+document.documentElement.addEventListener('click', function(aEvent) {
+	var element = aEvent.target || aEvent.srcElement;
 	while (element) {
 		if (element.nodeType == 1 &&
 				(element.classList.contains(CLASS_EDIT_BLOCK) ||
@@ -314,216 +504,8 @@ document.documentElement.addEventListener('click', function(event) {
 		}
 		element = element.parentNode;
 	}
-	relocateUI(null);
+	Edit.setCurrentBlock(null);
 }, false);
 
-function setContentEditable(div) {
-	div.ondblclick = div.onclick = div.onkeyup = updateUI;
-	div.ondragenter = div.ondrop = onDragOver;
-	div.contentEditable = true;
-	div.onfocus = function() {
-		relocateUI(this);
-	};
-	div.onblur = function() {
-		if (div.textContent == '') {
-			div.innerHTML = '<p>Edit this text</p>';
-			div._placeholder = div.firstChild;
-		} else if (div.textContent == 'Edit this text') {
-			div._placeholder = div.firstChild;
-		}
-	};
-
-	if (div.textContent == '') {
-		div.innerHTML = '<p>Edit this text</p>';
-		div._placeholder = div.firstChild;
-	}
-}
-
-function onDragOver(event) {
-	var hasFiles = event.dataTransfer.files && event.dataTransfer.files.length;
-	if (hasFiles)
-		event.preventDefault();
-
-	// var isHTML = event.dataTransfer.types.contains('text/html');
-	// if (isHTML) {
-	//   var htmlContent = event.dataTransfer.getData('text/html');
-	//   if (htmlContent.indexOf('<img') >= 0)
-	//     event.preventDefault();
-	// }
-
-	// var o = document.getElementById('edit_output');
-	// o.textContent = '';
-	// for (var i = 0; i < event.dataTransfer.types.length; i++) {
-	//   o.textContent += event.dataTransfer.types[i] + '\n';
-	// }
-}
-
-function relocateUI(div) {
-	if (div == currentDiv)
-		return;
-	if (currentDiv)
-		currentDiv.classList.remove(CLASS_CURRENT);
-	currentDiv = div;
-	range = null;
-	if (currentDiv) {
-		currentDiv.classList.add(CLASS_CURRENT);
-		if (currentDiv._placeholder) {
-			if ('createRange' in document) {
-				var selection = window.getSelection();
-				var range = document.createRange();
-				range.selectNodeContents(currentDiv._placeholder);
-				selection.removeAllRanges();
-				selection.addRange(range);
-			} else {
-				var range = document.selection.createRange();
-				range.moveToElementText(currentDiv._placeholder);
-				range.select();
-			}
-			currentDiv._placeholder = null;
-		}
-		ToolbarUI.show();
-	} else {
-		ToolbarUI.hide();
-	}
-}
-
-function updateUI() {
-	var node;
-	if ('getSelection' in window) {
-		var a = window.getSelection();
-		if (!a.rangeCount)
-			return;
-		var r = a.getRangeAt(0);
-		node = r.startContainer;
-		if (node.nodeType == 1)
-			node = node.childNodes[r.startOffset];
-		else if (node.nodeType == 3 && r.startOffset == node.length && node.nextSibling)
-			node = node.nextSibling;
-		else if (node.childNodes.length == 1)
-			node = node.firstChild;
-	} else {
-		var r = document.selection.createRange();
-		var r2 = r.duplicate();
-		node = r2.parentElement();
-	}
-	if (!node)
-		return;
-
-	var collapsed = r.collapsed ||
-		('compareEndPoints' in r && r.compareEndPoints('StartToEnd', r) == 0);
-	var chain = [];
-	var leafNode = node.nodeType == 1 ? node : null;
-	var blockNode = null;
-	var bold = false;
-	var italic = false;
-	var underline = false;
-	var link = false;
-	var uList = false;
-	var oList = false;
-	var image = node.nodeType == 1 && node.localName == 'img';
-
-	do {
-		var name;
-		if (node.nodeType == 1) {
-			name = node.localName;
-			if (node.id) name += '#' + node.id;
-			if (node.classList) for (var i = 0; i < node.classList.length; i++) name += '.' + node.classList[i];
-			if (node.localName == 'b' || node.localName == 'strong' || node.style.fontWeight == 'bold') bold = true;
-			if (node.localName == 'i' || node.localName == 'em' || node.style.fontStyle == 'italic') italic = true;
-			if (node.localName == 'u' || node.style.textDecoration == 'underline') underline = true;
-			if (node.localName == 'a') link = true;
-			if (node.localName == 'ul') uList = true;
-			if (node.localName == 'ol') oList = true;
-		} else if (node.nodeType == 3) {
-			name = '#text';//(' + node.length + ')';
-		}
-
-		chain.push(name);
-		blockNode = node;
-		node = node.parentNode;
-	} while (node && !node.classList.contains(CLASS_EDIT_BLOCK));
-
-	var alignment = (blockNode.style && blockNode.style.textAlign) || blockNode.align || 'left';
-
-	// console.log([collapsed, leafNode, blockNode, bold, italic, underline, alignment, link, uList, oList, image]);
-
-	ToolbarUI.setChain(
-		chain.reverse().join(' > ') + ' [' + blockNode.localName + ', ' + alignment + ']',
-		bold, italic, underline, link
-	);
-
-	ToolbarUI.setButtonState('bold', bold, collapsed);
-	ToolbarUI.setButtonState('italic', italic, collapsed);
-	ToolbarUI.setButtonState('underline', underline, collapsed);
-	ToolbarUI.setButtonState('justifyleft', alignment == 'left', image);
-	ToolbarUI.setButtonState('justifycenter', alignment == 'center', image);
-	ToolbarUI.setButtonState('justifyright', alignment == 'right', image);
-	ToolbarUI.setButtonState('justifyfull', alignment == 'justify', image);
-	ToolbarUI.setButtonState('link', link, (image || collapsed) && !link);
-	ToolbarUI.setButtonState('ulist', uList, image);
-	ToolbarUI.setButtonState('olist', oList, image);
-	ToolbarUI.setButtonState('image', false, image);
-	ToolbarUI.setButtonState('im_alignleft', image && leafNode.classList.contains(CLASS_ALIGN_LEFT), !image);
-	ToolbarUI.setButtonState('im_aligncenter', image && leafNode.classList.contains(CLASS_ALIGN_CENTER), !image);
-	ToolbarUI.setButtonState('im_alignright', image && leafNode.classList.contains(CLASS_ALIGN_RIGHT), !image);
-
-	ToolbarUI.setNodeName(blockNode.localName);
-}
-
-function getBlockNodeForSelection() {
-	var node;
-	if ('startContainer' in range) {
-		node = range.startContainer;
-		if (node.nodeType == 1)
-			node = node.childNodes[range.startOffset];
-	} else {
-		if (range.compareEndPoints('StartToEnd', range) == 0)
-			return null;
-		node = range.parentElement();
-	}
-	var blockNode = null;
-	while (node) {
-		if (node.nodeType == 1 && node.classList.contains(CLASS_EDIT_BLOCK))
-			break;
-		blockNode = node;
-		node = node.parentNode;
-	}
-	return blockNode;
-}
-
-function saveSelection() {
-	range = null;
-	if ('getSelection' in window) {
-		var a = window.getSelection();
-		if (a.rangeCount) {
-			range = a.getRangeAt(0);
-		}
-	} else {
-		range = document.selection.createRange();
-	}
-}
-
-function restoreSelection() {
-	if (!range) {
-		return;
-	}
-	if ('getSelection' in window) {
-		var a = window.getSelection();
-		a.removeAllRanges();
-		a.addRange(range);
-		currentDiv.focus();
-		setTimeout(updateUI, 0);
-	} else {
-		range.select();
-		setTimeout(updateUI, 0);
-	}
-}
-
-function output() {
-	if (!currentDiv) return;
-	outputDiv.textContent = serialize(currentDiv, false);
-}
-
-edit.restoreSelection = restoreSelection;
-edit.getBlockNodeForSelection = getBlockNodeForSelection;
+window.Edit = Edit;
 })();
