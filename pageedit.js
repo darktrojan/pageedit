@@ -444,6 +444,8 @@ var Edit = {
 	getBlockNodeForSelection: function() {
 		var node;
 		var range = this.getRange();
+		if (!range)
+			return null;
 		if ('startContainer' in range) {
 			node = range.startContainer;
 			if (node.nodeType == 1)

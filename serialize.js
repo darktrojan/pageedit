@@ -5,6 +5,9 @@ function serialize(node, outer) {
 	if (node.nodeType != 1)
 		return escapeHTML(node.nodeValue);
 
+	if (node.localName == 'br' && !node.nextSibling)
+		return '';
+
 	str = '';
 	if (outer) {
 		str += '<' + node.localName;

@@ -72,9 +72,6 @@ button#edit_link {
 	width: 20em;
 	text-align: right;
 }
-.edit_block > :first-child {
-	margin-top: 0;
-}
 #edit_output {
 	white-space: pre-wrap;
 }
