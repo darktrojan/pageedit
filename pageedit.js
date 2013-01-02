@@ -158,7 +158,7 @@ var Actions = {
 			if (typeof Edit.linkCallback == 'function')
 				href = Edit.linkCallback('text' in Edit.savedRange ? Edit.savedRange.text : Edit.savedRange.toString(),
 					function(aHref) {
-						restoreSelection();
+						Edit.restoreSelection();
 						Actions.action('createlink', aHref);
 					});
 			else
@@ -245,7 +245,7 @@ var Actions = {
 		Edit.updateUI();
 	},
 	imageAction: function() {
-		function callbackCallback(aHref) {
+		function callback(aHref) {
 			var block = Edit.getBlockNodeForSelection();
 			var newBlock = document.createElement('div');
 			var image = document.createElement('img');
@@ -256,13 +256,13 @@ var Actions = {
 		var href;
 		if (typeof Edit.imageCallback == 'function')
 			href = Edit.imageCallback(function(aHref) {
-				restoreSelection();
-				callbackCallback(aHref);
+				Edit.restoreSelection();
+				callback(aHref);
 			});
 		else
 			href = 'chiefs.png';
 		if (href) {
-			callbackCallback(href);
+			callback(href);
 		}
 	},
 	imageAlignAction: function(aClassName) {

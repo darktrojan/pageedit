@@ -9,6 +9,7 @@
 		-webkit-transition: top 250ms;
 	transition: top 250ms;
 	text-align: center;
+	z-index: 50;
 }
 #edit_toolbar.edit_shown {
 	top: 0;
