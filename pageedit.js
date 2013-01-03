@@ -2,7 +2,7 @@
 var blocks = ['h1', 'h2', 'h3', 'p', 'ul', 'ol', 'div', 'li'];
 
 var CLASS_EDIT_BLOCK = 'edit_block', CLASS_SHOWN = 'edit_shown', CLASS_CURRENT = 'edit_current';
-var CLASS_SELECTED = 'edit_selected', CLASS_DISABLED = 'edit_disabled';
+var CLASS_SELECTED = 'edit_selected', CLASS_DISABLED = 'edit_disabled', CLASS_PLACEHOLDER = 'edit_placeholder';
 var CLASS_ALIGN_LEFT = 'alignleft', CLASS_ALIGN_CENTER = 'aligncenter', CLASS_ALIGN_RIGHT = 'alignright';
 
 var ToolbarUI = {
@@ -27,20 +27,20 @@ var ToolbarUI = {
 		this.addButton(group, 'underline', 'U');
 
 		group = this.element.append('span.edit_radio_buttons');
-		this.addButton(group, 'justifyleft', 'L');
-		this.addButton(group, 'justifycenter', 'C');
-		this.addButton(group, 'justifyright', 'R');
-		this.addButton(group, 'justifyfull', 'F');
+		this.addButton(group, 'justifyleft', null, 'text_align_left.png');
+		this.addButton(group, 'justifycenter', null, 'text_align_center.png');
+		this.addButton(group, 'justifyright', null, 'text_align_right.png');
+		this.addButton(group, 'justifyfull', null, 'text_align_justify.png');
 
 		group = this.element.append('span');
 		this.addButton(group, 'link', 'a');
 
 		group = this.element.append('span.edit_radio_buttons');
-		this.addButton(group, 'ulist', '\u2022');
-		this.addButton(group, 'olist', '#');
+		this.addButton(group, 'ulist', null, 'text_list_bullets.png');
+		this.addButton(group, 'olist', null, 'text_list_numbers.png');
 
 		group = this.element.append('span');
-		this.addButton(group, 'image', 'im');
+		this.addButton(group, 'image', null, 'picture.png');
 
 		group = this.element.append('span.edit_radio_buttons');
 		this.addButton(group, 'im_alignleft', 'L');
@@ -55,7 +55,7 @@ var ToolbarUI = {
 			}
 		}, false);
 		this.element.addEventListener('click', function(aEvent) {
-			var id = aEvent.target.id;
+			var id = aEvent.target.localName == 'img' ? aEvent.target.parentNode.id : aEvent.target.id;
 			switch (id) {
 			case 'edit_bold':
 			case 'edit_italic':
@@ -85,11 +85,14 @@ var ToolbarUI = {
 	hide: function() {
 		this.element.classList.remove(CLASS_SHOWN);
 	},
-	addButton: function(aGroup, aName, aText) {
+	addButton: function(aGroup, aName, aText, aImage) {
 		var button = aGroup.append('button#edit_' + aName, aText);
 		button.onmousedown = Edit.saveSelection;
 		button.onmouseup = Edit.restoreSelection;
+		if (aImage)
+			button.append('img', null, { 'src': '/common/icons/' + aImage });
 		this.buttons[aName] = button;
+		return button;
 	},
 	setNodeName: function(aNodeName) {
 		this.nodeNameSelect.selectedIndex = -1;
@@ -268,15 +271,15 @@ var Actions = {
 	imageAlignAction: function(aClassName) {
 		var node;
 		var range = Edit.getRange();
-		if ('getSelection' in window) {
-			node = range.startContainer;
-			if (node.nodeType == 1)
-				node = node.childNodes[range.startOffset];
-			else if (node.nodeType == 3 && range.startOffset == node.length && node.nextSibling)
-				node = node.nextSibling;
-			else if (node.childNodes.length == 1)
-				node = node.firstChild;
-		}
+
+		node = range.startContainer;
+		if (node.nodeType == 1)
+			node = node.childNodes[range.startOffset];
+		else if (node.nodeType == 3 && range.startOffset == node.length && node.nextSibling)
+			node = node.nextSibling;
+		else if (node.childNodes.length == 1)
+			node = node.firstChild;
+
 		if (!node || node.localName != 'img')
 			return;
 
@@ -315,24 +318,58 @@ var Edit = {
 		}
 
 		aBlock.classList.add(CLASS_EDIT_BLOCK);
-		aBlock.ondblclick = aBlock.onclick = aBlock.onkeyup = Edit.updateUI;
+		aBlock.ondblclick = aBlock.onclick = Edit.updateUI;
 		aBlock.ondragenter = aBlock.ondrop = onDragOver;
 		aBlock.contentEditable = true;
 		aBlock.onfocus = function() {
 			Edit.setCurrentBlock(this);
+
+			if (this._placeholder) {
+				var selection = window.getSelection();
+				selection.removeAllRanges();
+				var r = document.createRange();
+				r.selectNodeContents(this._placeholder);
+				selection.addRange(r);
+			}
+			this.classList.remove(CLASS_PLACEHOLDER);
 		};
 		aBlock.onblur = function() {
+			for (var i = 0; i < this.childNodes.length; i++) {
+				var node = this.childNodes[i];
+				if (node.nodeType == 3) {
+					this.replaceChild(createElement('p', node.nodeValue), node);
+				}
+			}
+			this._placeholder = null;
+			this.classList.remove(CLASS_PLACEHOLDER);
 			if (aBlock.textContent == '') {
 				aBlock.innerHTML = '<p>Edit this text</p>';
 				aBlock._placeholder = aBlock.firstChild;
+				this.classList.add(CLASS_PLACEHOLDER);
 			} else if (aBlock.textContent == 'Edit this text') {
 				aBlock._placeholder = aBlock.firstChild;
+				this.classList.add(CLASS_PLACEHOLDER);
 			}
+		};
+		aBlock.onkeyup = function() {
+			if (this.textContent == '') {
+				this.clearChildNodes();
+				var p = this.append('p', 'Edit this text');
+				this._placeholder = p;
+
+				var selection = window.getSelection();
+				selection.removeAllRanges();
+				var r = document.createRange();
+				r.selectNodeContents(p);
+				selection.addRange(r);
+			}
+			Edit.updateUI();
 		};
 
 		if (aBlock.textContent == '') {
 			aBlock.innerHTML = '<p>Edit this text</p>';
 			aBlock._placeholder = aBlock.firstChild;
+			aBlock.classList.add(CLASS_PLACEHOLDER);
 		}
 	},
 	setCurrentBlock: function(aDiv) {
@@ -344,42 +381,23 @@ var Edit = {
 		this.range = null;
 		if (this.currentBlock) {
 			this.currentBlock.classList.add(CLASS_CURRENT);
-			// if (this.currentBlock._placeholder) {
-			// 	if ('createRange' in document) {
-			// 		var selection = window.getSelection();
-			// 		var range = document.createRange();
-			// 		range.selectNodeContents(this.currentBlock._placeholder);
-			// 		selection.removeAllRanges();
-			// 		selection.addRange(range);
-			// 	} else {
-			// 		var range = document.selection.createRange();
-			// 		range.moveToElementText(this.currentBlock._placeholder);
-			// 		range.select();
-			// 	}
-			// 	this.currentBlock._placeholder = null;
-			// }
 			ToolbarUI.show();
 		} else {
 			ToolbarUI.hide();
 		}
 	},
 	updateUI: function() {
-		var node, collapsed;
 		var range = Edit.getRange();
-		if ('getSelection' in window) {
-			node = range.startContainer;
-			if (node.nodeType == 1)
-				node = node.childNodes[range.startOffset];
-			else if (node.nodeType == 3 && range.startOffset == node.length && node.nextSibling)
-				node = node.nextSibling;
-			else if (node.childNodes.length == 1)
-				node = node.firstChild;
-			collapsed = range.collapsed;
-		} else {
-			// var r2 = range.duplicate();
-			node = range.parentElement();
-			collapsed = range.compareEndPoints('StartToEnd', range) == 0;
-		}
+		var node = range.startContainer;
+		var collapsed = range.collapsed;
+
+		if (node.nodeType == 1)
+			node = node.childNodes[range.startOffset];
+		else if (node.nodeType == 3 && range.startOffset == node.length && node.nextSibling)
+			node = node.nextSibling;
+		else if (node.childNodes.length == 1)
+			node = node.firstChild;
+
 		if (!node)
 			return;
 
@@ -424,9 +442,9 @@ var Edit = {
 			bold, italic, underline, link
 		);
 
-		ToolbarUI.setButtonState('bold', bold, collapsed);
-		ToolbarUI.setButtonState('italic', italic, collapsed);
-		ToolbarUI.setButtonState('underline', underline, collapsed);
+		ToolbarUI.setButtonState('bold', bold, collapsed || image);
+		ToolbarUI.setButtonState('italic', italic, collapsed || image);
+		ToolbarUI.setButtonState('underline', underline, collapsed || image);
 		ToolbarUI.setButtonState('justifyleft', alignment == 'left', image);
 		ToolbarUI.setButtonState('justifycenter', alignment == 'center', image);
 		ToolbarUI.setButtonState('justifyright', alignment == 'right', image);
@@ -465,32 +483,23 @@ var Edit = {
 		return blockNode;
 	},
 	getRange: function() {
-		if ('getSelection' in window) {
-			var selection = window.getSelection();
-			if (selection.rangeCount) {
-				return selection.getRangeAt(0);
-			}
-		} else {
-			return document.selection.createRange();
+		var selection = window.getSelection();
+		if (selection.rangeCount) {
+			return selection.getRangeAt(0);
 		}
 	},
 	saveSelection: function() {
 		Edit.savedRange = Edit.getRange();
 	},
 	restoreSelection: function() {
-		if (!Edit.savedRange) {
+		if (!Edit.savedRange)
 			return;
-		}
-		if ('getSelection' in window) {
-			var selection = window.getSelection();
-			selection.removeAllRanges();
-			selection.addRange(Edit.savedRange);
-			Edit.currentBlock.focus();
-			setTimeout(Edit.updateUI, 0);
-		} else {
-			Edit.savedRange.select();
-			setTimeout(Edit.updateUI, 0);
-		}
+
+		var selection = window.getSelection();
+		selection.removeAllRanges();
+		selection.addRange(Edit.savedRange);
+		Edit.currentBlock.focus();
+		setTimeout(Edit.updateUI, 0);
 	}
 };
 
