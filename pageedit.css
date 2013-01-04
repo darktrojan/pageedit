@@ -20,6 +20,7 @@
 #edit_toolbar button,
 #edit_toolbar select,
 #edit_toolbar input[type="button"] {
+  		filter: progid:DXImageTransform.Microsoft.Gradient(StartColorStr=#ffffff, EndColorStr=#cccccc);
 		background: -webkit-linear-gradient(#fff, #eee 10%, #ddd 90%, #ccc);
 	background: linear-gradient(#fff, #eee 10%, #ddd 90%, #ccc);
 	margin: 2px;
@@ -47,7 +48,7 @@ button#edit_link {
 	color: blue;
 }
 #edit_toolbar button.edit_selected {
-		background-color: #fcc;
+  		filter: progid:DXImageTransform.Microsoft.Gradient(StartColorStr=#cccccc, EndColorStr=#ffffff);
 		background: -webkit-linear-gradient(#ccc, #ddd 10%, #eee 90%, #fff);
 	background: linear-gradient(#ccc, #ddd 10%, #eee 90%, #fff);
 }
