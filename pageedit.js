@@ -7,12 +7,20 @@ var CLASS_ALIGN_LEFT = 'alignleft', CLASS_ALIGN_CENTER = 'aligncenter', CLASS_AL
 
 var ToolbarUI = {
 	element: null,
+	imagePrefix: '',
 	nodeNameSelect: null,
 	buttons: {},
 	chain_display: null,
 
 	init: function() {
 		this.element = document.body.append('div#edit_toolbar');
+
+		for (var i = 0; i < document.scripts.length; i++) {
+			var s = document.scripts[i];
+			var m = /^(.*\/)pageedit\.js$/.exec(s.src);
+			if (m)
+				this.imagePrefix = m[1];
+		}
 
 		this.nodeNameSelect = this.element.append('select#edit_node_name');
 		this.nodeNameSelect.append('option', 'Heading 1', { 'value': 'h1' });
@@ -90,7 +98,7 @@ var ToolbarUI = {
 		button.onmousedown = Edit.saveSelection;
 		button.onmouseup = Edit.restoreSelection;
 		if (aImage)
-			button.append('img', null, { 'src': '/common/icons/' + aImage });
+			button.append('img', null, { 'src': this.imagePrefix + aImage });
 		this.buttons[aName] = button;
 		return button;
 	},
