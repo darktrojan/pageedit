@@ -56,8 +56,13 @@ Edit.linkCallback = function(aRangeText) {
 	alert(aRangeText);
 	return 'about:blank';
 };
-Edit.imageCallback = function() {
-	return 'smile.png';
+Edit.imageCallback = function(aImage, aCallback) {
+	if (aImage) {
+		var filename = aImage.src.substring(aImage.src.lastIndexOf('/') + 1);
+		aImage.src = filename == 'smile.png' ? 'frown.png' : 'smile.png';
+	} else {
+		return 'smile.png';
+	}
 };
 
 function output() {

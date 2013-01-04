@@ -255,25 +255,21 @@ var Actions = {
 		}
 		Edit.updateUI();
 	},
-	imageAction: function() {
-		function callback(aHref) {
+	imageAction: function(aImage) {
+		function finish(aSrc) {
+			Edit.restoreSelection();
 			var block = Edit.getBlockNodeForSelection();
 			var newBlock = document.createElement('div');
 			var image = document.createElement('img');
-			image.setAttribute('src', aHref);
+			image.setAttribute('src', aSrc);
 			newBlock.appendChild(image);
 			block.parentNode.insertBefore(newBlock, block);
 		}
-		var href;
-		if (typeof Edit.imageCallback == 'function') {
-			href = Edit.imageCallback(function(aHref) {
-				Edit.restoreSelection();
-				callback(aHref);
-			});
-		}
-		if (href) {
-			callback(href);
-		}
+		var src;
+		if (typeof Edit.imageCallback == 'function')
+			src = Edit.imageCallback(aImage, finish);
+		if (src)
+			finish(src);
 	},
 	imageAlignAction: function(aClassName) {
 		var node;
@@ -325,7 +321,12 @@ var Edit = {
 		}
 
 		aBlock.classList.add(CLASS_EDIT_BLOCK);
-		aBlock.ondblclick = aBlock.onclick = Edit.updateUI;
+		aBlock.onclick = Edit.updateUI;
+		aBlock.ondblclick = function(aEvent) {
+			Edit.updateUI();
+			if (aEvent.target.localName == 'img')
+				Actions.imageAction(aEvent.target);
+		};
 		aBlock.ondragenter = aBlock.ondrop = onDragOver;
 		aBlock.contentEditable = true;
 		aBlock.onfocus = function() {
