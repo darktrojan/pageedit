@@ -265,13 +265,12 @@ var Actions = {
 			block.parentNode.insertBefore(newBlock, block);
 		}
 		var href;
-		if (typeof Edit.imageCallback == 'function')
+		if (typeof Edit.imageCallback == 'function') {
 			href = Edit.imageCallback(function(aHref) {
 				Edit.restoreSelection();
 				callback(aHref);
 			});
-		else
-			href = 'chiefs.png';
+		}
 		if (href) {
 			callback(href);
 		}
