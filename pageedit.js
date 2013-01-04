@@ -17,7 +17,7 @@ var ToolbarUI = {
 
 		for (var i = 0; i < document.scripts.length; i++) {
 			var s = document.scripts[i];
-			var m = /^(.*\/)pageedit\.js$/.exec(s.src);
+			var m = /^(.*\/)pageedit\.js(:\d+)?$/.exec(s.src);
 			if (m)
 				this.imagePrefix = m[1];
 		}
@@ -379,6 +379,17 @@ var Edit = {
 			aBlock._placeholder = aBlock.firstChild;
 			aBlock.classList.add(CLASS_PLACEHOLDER);
 		}
+	},
+	unsetContentEditable: function(aBlock) {
+		aBlock.classList.remove(CLASS_EDIT_BLOCK);
+		aBlock.contentEditable = false;
+		aBlock.onblur =
+			aBlock.onclick =
+			aBlock.ondblclick =
+			aBlock.ondragenter =
+			aBlock.ondrop =
+			aBlock.onfocus =
+			aBlock.onkeyup = null;
 	},
 	setCurrentBlock: function(aDiv) {
 		if (aDiv == this.currentBlock)
