@@ -1,21 +1,27 @@
 function DraggableImageBlock(aElement) {
 	this.init(aElement, false);
 	aElement.onclick = function() {
-		aElement.parentNode.focus();
+		var range = document.createRange();
+		range.selectNode(aElement.querySelector('img'));
+		var selection = window.getSelection();
+		selection.removeAllRanges();
+		selection.addRange(range);
 		Edit.updateUI();
-	}
+		Edit.setCurrentBlock(aElement.parentNode);
+	};
 }
 DraggableImageBlock.prototype = new DraggableObject;
 DraggableImageBlock.prototype.customMouseMove = function(aEvent) {
 	if (!this.holder) {
 		this.holder = createElement('div.draggingholder');
 		var image = this.domNode.firstElementChild;
+		this.holder.style.width = image.offsetWidth + 'px';
 		this.holder.style.height = image.offsetHeight + 'px';
 		if (image.classList.contains('alignleft')) {
-			this.holder.style.width = image.offsetWidth + 'px';
 			this.holder.classList.add('alignleft');
+		} else if (image.classList.contains('aligncenter')) {
+			this.holder.classList.add('aligncenter');
 		} else if (image.classList.contains('alignright')) {
-			this.holder.style.width = image.offsetWidth + 'px';
 			this.holder.classList.add('alignright');
 		}
 		this.parent = this.domNode.parentNode;
@@ -104,7 +110,7 @@ EditBlock.prototype = {
 		i.append('img', null, aAttributes);
 		new DraggableImageBlock(i);
 		if (aPrevious) {
-			this.content.insertBefore(i, aPrevious.nextElementSibling)
+			this.content.insertBefore(i, aPrevious.nextElementSibling);
 		} else {
 			this.content.appendChild(i);
 		}
