@@ -48,6 +48,10 @@ var ToolbarUI = {
 		this.addButton(group, 'olist', null, 'text_list_numbers.png');
 
 		group = this.element.append('span');
+		this.addButton(group, 'indent', null, 'text_indent.png');
+		this.addButton(group, 'outdent', null, 'text_indent_remove.png');
+
+		group = this.element.append('span');
 		this.addButton(group, 'image', null, 'picture.png');
 
 		group = this.element.append('span.edit_radio_buttons');
@@ -72,6 +76,8 @@ var ToolbarUI = {
 			case 'edit_justifycenter':
 			case 'edit_justifyright':
 			case 'edit_justifyfull':
+			case 'edit_indent':
+			case 'edit_outdent':
 				return Actions.action(id.substring(5), null);
 			case 'edit_link':
 				return Actions.linkAction();
@@ -441,8 +447,8 @@ var Edit = {
 				if (node.localName == 'i' || node.localName == 'em' || node.style.fontStyle == 'italic') italic = true;
 				if (node.localName == 'u' || node.style.textDecoration == 'underline') underline = true;
 				if (node.localName == 'a') link = true;
-				if (node.localName == 'ul') uList = true;
-				if (node.localName == 'ol') oList = true;
+				if (node.localName == 'ul' && !oList) uList = true;
+				if (node.localName == 'ol' && !uList) oList = true;
 			} else if (node.nodeType == 3) {
 				name = '#text';//(' + node.length + ')';
 			}
@@ -471,6 +477,8 @@ var Edit = {
 		ToolbarUI.setButtonState('link', link, (image || collapsed) && !link);
 		ToolbarUI.setButtonState('ulist', uList, image);
 		ToolbarUI.setButtonState('olist', oList, image);
+		ToolbarUI.setButtonState('indent', false, !uList && !oList);
+		ToolbarUI.setButtonState('outdent', false, !uList && !oList);
 		ToolbarUI.setButtonState('image', false, image);
 		ToolbarUI.setButtonState('im_alignleft', image && leafNode.classList.contains(CLASS_ALIGN_LEFT), !image);
 		ToolbarUI.setButtonState('im_aligncenter', image && leafNode.classList.contains(CLASS_ALIGN_CENTER), !image);
