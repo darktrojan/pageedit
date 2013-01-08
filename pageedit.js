@@ -204,16 +204,12 @@ var Actions = {
 					break;
 				node = node.parentNode;
 			}
-			if ('selectNode' in Edit.savedRange)
-				Edit.savedRange.selectNode(node);
-			else
-				Edit.savedRange.moveToElementText(node);
+			Edit.savedRange.selectNode(node);
 			this.action('unlink', null);
 		} else {
 			var href;
 			if (typeof Edit.linkCallback == 'function')
-				href = Edit.linkCallback('text' in Edit.savedRange ? Edit.savedRange.text : Edit.savedRange.toString(),
-					function(aHref) {
+				href = Edit.linkCallback(Edit.savedRange.toString(), function(aHref) {
 						Edit.restoreSelection();
 						Actions.action('createlink', aHref);
 					});
@@ -240,15 +236,10 @@ var Actions = {
 			return;
 		}
 
-		var list;
-		if ('startContainer' in Edit.savedRange) {
-			list = Edit.savedRange.startContainer;
-			if (list.nodeType == 1)
-				list = list.childNodes[Edit.savedRange.startOffset];
-		} else {
-			var r2 = Edit.savedRange.duplicate();
-			list = r2.parentElement();
-		}
+		var list = Edit.savedRange.startContainer;
+		if (list.nodeType == 1)
+			list = list.childNodes[Edit.savedRange.startOffset];
+
 		while (list) {
 			if (list.nodeType == 1) {
 				if (list.localName == 'ul' || list.localName == 'ol') {
@@ -293,10 +284,7 @@ var Actions = {
 				newList.appendChild(li);
 			}
 			parent.replaceChild(newList, blockNode);
-			if ('selectNode' in Edit.savedRange)
-				Edit.savedRange.selectNode(newList);
-			else
-				Edit.savedRange.moveToElementText(newList);
+			Edit.savedRange.selectNode(newList);
 		}
 		Edit.updateUI();
 	},
@@ -531,15 +519,11 @@ var Edit = {
 		var range = this.getRange();
 		if (!range)
 			return null;
-		if ('startContainer' in range) {
-			node = range.startContainer;
-			if (node.nodeType == 1)
-				node = node.childNodes[range.startOffset];
-		} else {
-			if (range.compareEndPoints('StartToEnd', range) == 0)
-				return null;
-			node = range.parentElement();
-		}
+
+		node = range.startContainer;
+		if (node.nodeType == 1)
+			node = node.childNodes[range.startOffset];
+
 		var blockNode = null;
 		while (node) {
 			if (node.nodeType == 1 && node.classList.contains(CLASS_EDIT_BLOCK))
