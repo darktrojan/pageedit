@@ -5,10 +5,74 @@ var CLASS_EDIT_BLOCK = 'edit_block', CLASS_SHOWN = 'edit_shown', CLASS_CURRENT =
 var CLASS_SELECTED = 'edit_selected', CLASS_DISABLED = 'edit_disabled', CLASS_PLACEHOLDER = 'edit_placeholder';
 var CLASS_ALIGN_LEFT = 'alignleft', CLASS_ALIGN_CENTER = 'aligncenter', CLASS_ALIGN_RIGHT = 'alignright';
 
+var NodeTypeUI = {
+	container: null,
+	button: null,
+	dropdown: null,
+	currentTypeItem: null,
+
+	init: function() {
+		var self = this;
+
+		this.container = createElement('div#edit_nodetype_container');
+		this.container.onmousedown = Edit.saveSelection;
+		this.button = this.container.append('button#edit_nodetype_button', '\u00a0');
+		this.button.onclick = function() {
+			self.dropdown.classList.toggle(CLASS_SHOWN);
+			this.blur();
+		};
+		this.dropdown = this.container.append('div#edit_nodetype_dropdown');
+		this.dropdown.innerHTML =
+			'<div class="edit_nodetype_item" data-tag="h1"><h1>Heading 1</h1></div>' +
+			'<div class="edit_nodetype_item" data-tag="h2"><h2>Heading 2</h2></div>' +
+			'<div class="edit_nodetype_item" data-tag="h3"><h3>Heading 3</h3></div>' +
+			'<div class="edit_nodetype_item" data-tag="p"><p>Paragraph</p></div>' +
+			'<div class="edit_nodetype_item" data-tag="pre"><pre>Preformatted</pre></div>';
+		this.dropdown.onclick = function(aEvent) {
+			self.dropdownClick(aEvent);
+		};
+
+		document.documentElement.addEventListener('click', function(aEvent) {
+			if (!aEvent.target.ancestor('#edit_nodetype_container')) {
+				self.dropdown.classList.remove(CLASS_SHOWN);
+			}
+		}, false);
+
+		return this.container;
+	},
+	dropdownClick: function(aEvent) {
+		var item = aEvent.target.ancestor('.edit_nodetype_item');
+		if (!item)
+			return;
+
+		Edit.restoreSelection();
+		Edit.Actions.action('formatblock', item.dataset.tag);
+
+		this.button.textContent = item.textContent;
+		this.dropdown.classList.remove(CLASS_SHOWN);
+	},
+	setNodeType: function(aText) {
+		if (this.currentTypeItem)
+			this.currentTypeItem.classList.remove(CLASS_SELECTED);
+
+		var items = this.dropdown.querySelectorAll('.edit_nodetype_item');
+		for (var i = 0; i < items.length; i++) {
+			if (items[i].dataset.tag == aText) {
+				items[i].classList.add(CLASS_SELECTED);
+				this.currentTypeItem = items[i];
+				this.button.textContent = items[i].textContent;
+				this.button.classList.remove('edit_disabled');
+				return;
+			}
+		}
+		this.button.textContent = '\u00a0';
+		this.button.classList.add('edit_disabled');
+	}
+};
+
 var ToolbarUI = {
 	element: null,
 	imagePrefix: '',
-	nodeNameSelect: null,
 	buttons: {},
 	chain_display: null,
 
@@ -22,12 +86,7 @@ var ToolbarUI = {
 				this.imagePrefix = m[1];
 		}
 
-		this.nodeNameSelect = this.element.append('select#edit_node_name');
-		this.nodeNameSelect.append('option', 'Heading 1', { 'value': 'h1' });
-		this.nodeNameSelect.append('option', 'Heading 2', { 'value': 'h2' });
-		this.nodeNameSelect.append('option', 'Heading 3', { 'value': 'h3' });
-		this.nodeNameSelect.append('option', 'Paragraph', { 'value': 'p' });
-		this.nodeNameSelect.onmousedown = Edit.saveSelection;
+		this.element.appendChild(NodeTypeUI.init());
 
 		var group = this.element.append('span');
 		this.addButton(group, 'bold', 'B');
@@ -108,14 +167,6 @@ var ToolbarUI = {
 		this.buttons[aName] = button;
 		return button;
 	},
-	setNodeName: function(aNodeName) {
-		this.nodeNameSelect.selectedIndex = -1;
-		for (var i = 0; i < this.nodeNameSelect.options.length; i++) {
-			if (this.nodeNameSelect.options[i].value == aNodeName) {
-				this.nodeNameSelect.selectedIndex = i;
-			}
-		}
-	},
 	setButtonState: function(aButton, aSelected, aDisabled) {
 		var classList = this.buttons[aButton].classList;
 		classList[aSelected ? 'add' : 'remove'](CLASS_SELECTED);
@@ -134,18 +185,6 @@ var Actions = {
 	action: function(aCommand, aValue) {
 		if (!Edit.currentBlock) return;
 		document.execCommand(aCommand, false, aValue);
-	},
-	nodeNameAction: function() {
-		var blockNode = Edit.getBlockNodeForSelection();
-		if (!blockNode)
-			return;
-		if ('selectNodeContents' in Edit.savedRange)
-			Edit.savedRange.selectNodeContents(blockNode);
-		else
-			Edit.savedRange.moveToElementText(blockNode);
-		this.action('formatblock', '<' + ToolbarUI.nodeNameSelect.value + '>');
-		Edit.currentBlock.focus();
-		Edit.updateUI();
 	},
 	linkAction: function() {
 		var button = ToolbarUI.buttons['link'];
@@ -305,6 +344,7 @@ var Edit = {
 
 	Actions: Actions,
 	ToolbarUI: ToolbarUI,
+	NodeTypeUI: NodeTypeUI,
 
 	setContentEditable: function(aBlock) {
 		function onDragOver(aEvent) {
@@ -484,7 +524,7 @@ var Edit = {
 		ToolbarUI.setButtonState('im_aligncenter', image && leafNode.classList.contains(CLASS_ALIGN_CENTER), !image);
 		ToolbarUI.setButtonState('im_alignright', image && leafNode.classList.contains(CLASS_ALIGN_RIGHT), !image);
 
-		ToolbarUI.setNodeName(blockNode.localName);
+		NodeTypeUI.setNodeType(blockNode.localName);
 	},
 	getBlockNodeForSelection: function() {
 		var node;

@@ -14,6 +14,49 @@
 #edit_toolbar.edit_shown {
 	top: 0;
 }
+#edit_nodetype_container {
+	width: 200px;
+	position: relative;
+	display: inline-block;
+	text-align: left;
+}
+#edit_nodetype_button {
+	width: 196px;
+}
+#edit_nodetype_dropdown {
+	position: absolute;
+	top: 27px;
+	left: 2px;
+	visibility: hidden;
+	background-color: white;
+	width: 196px;
+}
+#edit_nodetype_dropdown.edit_shown {
+	visibility: visible;
+}
+.edit_nodetype_item {
+	height: 30px;
+	border: 1px #ccc solid;
+	padding: 0 10px;
+	overflow: hidden;
+	cursor: pointer;
+}
+.edit_nodetype_item:hover,
+.edit_nodetype_item:hover > * {
+	color: highlighttext !important;
+	background-color: highlight !important;
+}
+.edit_nodetype_item + .edit_nodetype_item {
+	border-top: none;
+}
+.edit_nodetype_item > * {
+	line-height: 30px;
+	vertical-align: top;
+	margin: 0;
+	border: 0;
+	padding: 0;
+	white-space: nowrap;
+}
 #edit_toolbar span {
 	white-space: nowrap;
 }
@@ -56,7 +99,7 @@ button#edit_link {
 	background: #ddd;
 	color: #999;
 }
-#edit_toolbar button#edit_button_link.edit_disabled {
+#edit_toolbar button#edit_link.edit_disabled {
 	color: #99f;
 }
 #edit_toolbar span.edit_radio_buttons {
@@ -81,7 +124,4 @@ button#edit_link {
 }
 .edit_placeholder {
 	color: #999;
-}
-#edit_output {
-	white-space: pre-wrap;
 }
