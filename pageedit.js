@@ -120,9 +120,9 @@ var ToolbarUI = {
 
 		this.chain_display = this.element.append('div#edit_chain');
 
-		this.element.addEventListener('change', function(aEvent) {
-			if (aEvent.target.id == 'edit_node_name') {
-				Actions.nodeNameAction();
+		this.element.addEventListener('mousedown', function(aEvent) {
+			if (aEvent.target == this) {
+				aEvent.preventDefault();
 			}
 		}, false);
 		this.element.addEventListener('click', function(aEvent) {
@@ -556,11 +556,12 @@ var Edit = {
 
 ToolbarUI.init();
 document.documentElement.addEventListener('click', function(aEvent) {
-	var element = aEvent.target || aEvent.srcElement;
+	var element = aEvent.target;
 	while (element) {
 		if (element.nodeType == 1 &&
 				(element.classList.contains(CLASS_EDIT_BLOCK) ||
 				element.id == 'edit_toolbar' ||
+				element.id == 'darkbox-a' ||
 				element.id == 'darkbox-b')) {
 			return;
 		}
