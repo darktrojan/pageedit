@@ -393,6 +393,24 @@ var Edit = {
 				this.classList.add(CLASS_PLACEHOLDER);
 			}
 		};
+		aBlock.onkeypress = function(aEvent) {
+			if (aEvent.ctrlKey) {
+				switch (aEvent.charCode) {
+				case 98:
+					Edit.Actions.action('bold', null);
+					aEvent.preventDefault();
+					break;
+				case 105:
+					Edit.Actions.action('italic', null);
+					aEvent.preventDefault();
+					break;
+				case 117:
+					Edit.Actions.action('underline', null);
+					aEvent.preventDefault();
+					break;
+				}
+			}
+		};
 		aBlock.onkeyup = function() {
 			if (this.textContent == '') {
 				this.clearChildNodes();
