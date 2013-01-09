@@ -5,6 +5,16 @@ var CLASS_EDIT_BLOCK = 'edit_block', CLASS_SHOWN = 'edit_shown', CLASS_CURRENT =
 var CLASS_SELECTED = 'edit_selected', CLASS_DISABLED = 'edit_disabled', CLASS_PLACEHOLDER = 'edit_placeholder';
 var CLASS_ALIGN_LEFT = 'alignleft', CLASS_ALIGN_CENTER = 'aligncenter', CLASS_ALIGN_RIGHT = 'alignright';
 
+var scriptPath = '';
+for (var i = 0; i < document.scripts.length; i++) {
+	var s = document.scripts[i];
+	var m = /^(.*\/)pageedit\.js(:\d+)?$/.exec(s.getAttribute('src'));
+	if (m) {
+		scriptPath = m[1];
+		break;
+	}
+}
+
 var NodeTypeUI = {
 	container: null,
 	button: null,
@@ -72,19 +82,11 @@ var NodeTypeUI = {
 
 var ToolbarUI = {
 	element: null,
-	imagePrefix: '',
 	buttons: {},
 	chain_display: null,
 
 	init: function() {
 		this.element = document.body.append('div#edit_toolbar');
-
-		for (var i = 0; i < document.scripts.length; i++) {
-			var s = document.scripts[i];
-			var m = /^(.*\/)pageedit\.js(:\d+)?$/.exec(s.src);
-			if (m)
-				this.imagePrefix = m[1];
-		}
 
 		this.element.appendChild(NodeTypeUI.init());
 
@@ -163,7 +165,7 @@ var ToolbarUI = {
 		button.onmousedown = Edit.saveSelection;
 		button.onmouseup = Edit.restoreSelection;
 		if (aImage)
-			button.append('img', null, { 'src': this.imagePrefix + aImage });
+			button.append('img', null, { 'src': scriptPath + aImage });
 		this.buttons[aName] = button;
 		return button;
 	},
@@ -327,6 +329,7 @@ var Actions = {
 };
 
 var Edit = {
+	scriptPath: scriptPath,
 	currentBlock: null,
 	savedRange: null,
 

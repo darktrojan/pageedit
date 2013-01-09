@@ -126,7 +126,7 @@ EditBlock.prototype = {
 	},
 	outputAsync: function(aCallback) {
 		var self = this;
-		ScriptLoader.maybeLoadScript(!window.serialize, 'serialize.js', function() {
+		ScriptLoader.maybeLoadScript(!window.serialize, Edit.scriptPath + 'serialize.js', function() {
 			aCallback(self.output());
 		});
 	}
