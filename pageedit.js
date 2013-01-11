@@ -165,7 +165,7 @@ var ToolbarUI = {
 		button.onmousedown = Edit.saveSelection;
 		button.onmouseup = Edit.restoreSelection;
 		if (aImage)
-			button.append('img', null, { 'src': scriptPath + aImage });
+			button.append('img', null, { 'src': scriptPath + 'icons/' + aImage });
 		this.buttons[aName] = button;
 		return button;
 	},
