@@ -4,7 +4,7 @@ Demo: http://www.darktrojan.net/tools/pageedit/demo/editblocks.html
 
 Currently it is capable of:
 
-* block formatting selection (ie. <h1>, <h2>, <h3>, <p>)
+* block formatting selection (ie. &lt;h1&gt;, &lt;h2&gt;, &lt;h3&gt;, &lt;p&gt;)
 * bold, italic and underline
 * text alignment
 * links (wire in your own code with a callback)
