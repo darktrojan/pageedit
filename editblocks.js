@@ -71,63 +71,45 @@ DraggableImageBlock.prototype.customMouseUp = function(aEvent) {
 		this.parent = null;
 	}
 };
-function EditBlock(aContent) {
-	this.content = aContent;
-	this.init();
-}
-EditBlock.prototype = {
-	content: null,
 
-	init: function() {
-		function strip(aElement) {
-			for (var i = 0; i < aElement.childNodes.length;) {
-				var child = aElement.childNodes[i];
-				if (child.nodeType == 3 && !child.nodeValue.trim()) {
-					aElement.removeChild(child);
-				} else if (child.nodeType == 1) {
-					strip(child);
-					i++;
-				} else {
-					i++;
-				}
+Edit.EditArea.prototype.oldInit = Edit.EditArea.prototype.init;
+Edit.EditArea.prototype.init = function() {
+	this.oldInit();
+
+	function strip(aElement) {
+		for (var i = 0; i < aElement.childNodes.length;) {
+			var child = aElement.childNodes[i];
+			if (child.nodeType == 3 && !child.nodeValue.trim()) {
+				aElement.removeChild(child);
+			} else if (child.nodeType == 1) {
+				strip(child);
+				i++;
+			} else {
+				i++;
 			}
 		}
+	}
 
-		this.content.editBlock = this;
-		strip(this.content);
-		var imageBlocks = this.content.querySelectorAll('.imageblock');
-		for (var i = 0; i < imageBlocks.length; i++) {
-			new DraggableImageBlock(imageBlocks[i]);
-		}
-	},
-	imageBlock: function(aURL, aAttributes, aPrevious) {
-		if (aAttributes)
-			aAttributes['src'] = aURL;
-		else
-			aAttributes = { 'src': aURL };
+	strip(this.content);
+	var imageBlocks = this.content.querySelectorAll('.imageblock');
+	for (var i = 0; i < imageBlocks.length; i++) {
+		new DraggableImageBlock(imageBlocks[i]);
+	}
+};
+// Note that there is no overridden destroy function here, because I have no
+// need for it at this stage, and writing it opens a whole other can of worms.
+Edit.EditArea.prototype.imageBlock = function(aURL, aAttributes, aPrevious) {
+	if (aAttributes)
+		aAttributes['src'] = aURL;
+	else
+		aAttributes = { 'src': aURL };
 
-		var i = createElement('div.imageblock');
-		i.append('img', null, aAttributes);
-		new DraggableImageBlock(i);
-		if (aPrevious) {
-			this.content.insertBefore(i, aPrevious.nextElementSibling);
-		} else {
-			this.content.appendChild(i);
-		}
-	},
-	output: function() {
-		var html = '';
-		for (var i = 0; i < this.content.children.length; i++) {
-			var child = this.content.children[i];
-			child.removeAttribute('draggableObject'); // fs
-			html += serialize(child, true);
-		}
-		return html;
-	},
-	outputAsync: function(aCallback) {
-		var self = this;
-		ScriptLoader.maybeLoadScript(!window.serialize, Edit.scriptPath + 'serialize.js', function() {
-			aCallback(self.output());
-		});
+	var i = createElement('div.imageblock');
+	i.append('img', null, aAttributes);
+	new DraggableImageBlock(i);
+	if (aPrevious) {
+		this.content.insertBefore(i, aPrevious.nextElementSibling);
+	} else {
+		this.content.appendChild(i);
 	}
 };

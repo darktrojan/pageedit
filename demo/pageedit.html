@@ -49,7 +49,7 @@ h1, h2, h3 {
 
 var editables = document.getElementsByClassName('editme');
 for (var i = 0; i < editables.length; i++) {
-	Edit.setContentEditable(editables[i]);
+	new Edit.EditArea(editables[i]);
 }
 Edit.linkCallback = function(aRangeText) {
 	alert(aRangeText);
@@ -65,7 +65,7 @@ Edit.imageCallback = function(aImage, aCallback) {
 };
 
 function output() {
-	$('output').textContent = serialize(editables[0]);
+	$('output').textContent = editables[0].editArea.output();
 }
 
 </script>

@@ -328,16 +328,14 @@ var Actions = {
 	}
 };
 
-var Edit = {
-	scriptPath: scriptPath,
-	currentBlock: null,
-	savedRange: null,
-
-	Actions: Actions,
-	ToolbarUI: ToolbarUI,
-	NodeTypeUI: NodeTypeUI,
-
-	setContentEditable: function(aBlock) {
+function EditArea(aContent) {
+	this.content = aContent;
+	this.init();
+}
+EditArea.prototype = {
+	content: null,
+	init: function() {
+		this.content.editArea = this;
 		function onDragOver(aEvent) {
 			var hasFiles = aEvent.dataTransfer.files && aEvent.dataTransfer.files.length;
 			if (hasFiles)
@@ -357,16 +355,16 @@ var Edit = {
 			// }
 		}
 
-		aBlock.classList.add(CLASS_EDIT_BLOCK);
-		aBlock.onclick = Edit.updateUI;
-		aBlock.ondblclick = function(aEvent) {
+		this.content.classList.add(CLASS_EDIT_BLOCK);
+		this.content.onclick = Edit.updateUI;
+		this.content.ondblclick = function(aEvent) {
 			Edit.updateUI();
 			if (aEvent.target.localName == 'img')
 				Actions.imageAction(aEvent.target);
 		};
-		aBlock.ondragenter = aBlock.ondrop = onDragOver;
-		aBlock.contentEditable = true;
-		aBlock.onfocus = function() {
+		this.content.ondragenter = this.content.ondrop = onDragOver;
+		this.content.contentEditable = true;
+		this.content.onfocus = function() {
 			Edit.setCurrentBlock(this);
 
 			if (this._placeholder) {
@@ -378,7 +376,7 @@ var Edit = {
 			}
 			this.classList.remove(CLASS_PLACEHOLDER);
 		};
-		aBlock.onblur = function() {
+		this.content.onblur = function() {
 			for (var i = 0; i < this.childNodes.length; i++) {
 				var node = this.childNodes[i];
 				if (node.nodeType == 3) {
@@ -387,16 +385,16 @@ var Edit = {
 			}
 			this._placeholder = null;
 			this.classList.remove(CLASS_PLACEHOLDER);
-			if (aBlock.textContent == '') {
-				aBlock.innerHTML = '<p>Edit this text</p>';
-				aBlock._placeholder = aBlock.firstChild;
+			if (this.textContent == '') {
+				this.innerHTML = '<p>Edit this text</p>';
+				this._placeholder = this.firstChild;
 				this.classList.add(CLASS_PLACEHOLDER);
-			} else if (aBlock.textContent == 'Edit this text') {
-				aBlock._placeholder = aBlock.firstChild;
+			} else if (this.textContent == 'Edit this text') {
+				this._placeholder = this.firstChild;
 				this.classList.add(CLASS_PLACEHOLDER);
 			}
 		};
-		aBlock.onkeypress = function(aEvent) {
+		this.content.onkeypress = function(aEvent) {
 			if (aEvent.ctrlKey) {
 				switch (aEvent.charCode) {
 				case 98:
@@ -414,7 +412,7 @@ var Edit = {
 				}
 			}
 		};
-		aBlock.onkeyup = function() {
+		this.content.onkeyup = function() {
 			if (this.textContent == '') {
 				this.clearChildNodes();
 				var p = this.append('p', 'Edit this text');
@@ -429,23 +427,44 @@ var Edit = {
 			Edit.updateUI();
 		};
 
-		if (aBlock.textContent == '') {
-			aBlock.innerHTML = '<p>Edit this text</p>';
-			aBlock._placeholder = aBlock.firstChild;
-			aBlock.classList.add(CLASS_PLACEHOLDER);
+		if (this.content.textContent == '') {
+			this.content.innerHTML = '<p>Edit this text</p>';
+			this.content._placeholder = this.content.firstChild;
+			this.content.classList.add(CLASS_PLACEHOLDER);
 		}
 	},
-	unsetContentEditable: function(aBlock) {
-		aBlock.classList.remove(CLASS_EDIT_BLOCK);
-		aBlock.contentEditable = false;
-		aBlock.onblur =
-			aBlock.onclick =
-			aBlock.ondblclick =
-			aBlock.ondragenter =
-			aBlock.ondrop =
-			aBlock.onfocus =
-			aBlock.onkeyup = null;
+	destroy: function() {
+		this.content.classList.remove(CLASS_EDIT_BLOCK);
+		this.content.contentEditable = false;
+		this.content.onblur =
+			this.content.onclick =
+			this.content.ondblclick =
+			this.content.ondragenter =
+			this.content.ondrop =
+			this.content.onfocus =
+			this.content.onkeyup = null;
 	},
+	output: function() {
+		return serialize(this.content, false);
+	},
+	outputAsync: function(aCallback) {
+		var self = this;
+		ScriptLoader.maybeLoadScript(!window.serialize, Edit.scriptPath + 'serialize.js', function() {
+			aCallback(self.output());
+		});
+	}
+};
+
+var Edit = {
+	scriptPath: scriptPath,
+	currentBlock: null,
+	savedRange: null,
+
+	Actions: Actions,
+	ToolbarUI: ToolbarUI,
+	NodeTypeUI: NodeTypeUI,
+	EditArea: EditArea,
+
 	setCurrentBlock: function(aDiv) {
 		if (aDiv == this.currentBlock)
 			return;
