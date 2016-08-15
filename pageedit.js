@@ -4,7 +4,6 @@
 
 	var CLASS_EDIT_BLOCK = 'edit_block', CLASS_SHOWN = 'edit_shown', CLASS_CURRENT = 'edit_current';
 	var CLASS_SELECTED = 'edit_selected', CLASS_DISABLED = 'edit_disabled', CLASS_PLACEHOLDER = 'edit_placeholder';
-	var CLASS_ALIGN_LEFT = 'alignleft', CLASS_ALIGN_CENTER = 'aligncenter', CLASS_ALIGN_RIGHT = 'alignright';
 
 	var scriptPath = '';
 	for (var i = 0; i < document.scripts.length; i++) {
@@ -115,14 +114,6 @@
 			this.addButton(group, 'indent', null, 'text_indent.png');
 			this.addButton(group, 'outdent', null, 'text_indent_remove.png');
 
-			group = this.element.append('span');
-			this.addButton(group, 'image', null, 'picture.png');
-
-			group = this.element.append('span.edit_radio_buttons');
-			this.addButton(group, 'im_alignleft', 'L');
-			this.addButton(group, 'im_aligncenter', 'C');
-			this.addButton(group, 'im_alignright', 'R');
-
 			this.chain_display = this.element.append('div#edit_chain');
 
 			this.element.addEventListener('mousedown', function(aEvent) {
@@ -150,14 +141,6 @@
 				case 'edit_ulist':
 				case 'edit_olist':
 					Actions.listAction(id.substr(5, 2));
-					return;
-				case 'edit_image':
-					Actions.imageAction();
-					return;
-				case 'edit_im_alignleft':
-				case 'edit_im_aligncenter':
-				case 'edit_im_alignright':
-					Actions.imageAlignAction(id.substring(8));
 					return;
 				}
 			}, false);
@@ -306,46 +289,6 @@
 				Edit.savedRange.selectNode(newList);
 			}
 			Edit.updateUI();
-		},
-		imageAction: function(aImage) {
-			function finish(aSrc) {
-				Edit.restoreSelection();
-				var block = Edit.getBlockNodeForSelection();
-				var newBlock = document.createElement('div');
-				var image = document.createElement('img');
-				image.setAttribute('src', aSrc);
-				newBlock.appendChild(image);
-				block.parentNode.insertBefore(newBlock, block);
-			}
-			var src;
-			if (typeof Edit.imageCallback == 'function') {
-				src = Edit.imageCallback(aImage, finish);
-				if (src) {
-					finish(src);
-				}
-			}
-		},
-		imageAlignAction: function(aClassName) {
-			var node;
-			var range = Edit.getRange();
-
-			node = range.startContainer;
-			if (node.nodeType == 1) {
-				node = node.childNodes[range.startOffset];
-			} else if (node.nodeType == 3 && range.startOffset == node.length && node.nextSibling) {
-				node = node.nextSibling;
-			} else if (node.childNodes.length == 1) {
-				node = node.firstChild;
-			}
-
-			if (!node || node.localName != 'img') {
-				return;
-			}
-
-			node.classList.remove(CLASS_ALIGN_LEFT);
-			node.classList.remove(CLASS_ALIGN_CENTER);
-			node.classList.remove(CLASS_ALIGN_RIGHT);
-			node.classList.add(aClassName);
 		}
 	};
 
@@ -362,29 +305,10 @@
 				if (hasFiles) {
 					aEvent.preventDefault();
 				}
-
-				// var isHTML = aEvent.dataTransfer.types.contains('text/html');
-				// if (isHTML) {
-				//   var htmlContent = aEvent.dataTransfer.getData('text/html');
-				//   if (htmlContent.indexOf('<img') >= 0)
-				//     aEvent.preventDefault();
-				// }
-
-				// var o = document.getElementById('edit_output');
-				// o.textContent = '';
-				// for (var i = 0; i < aEvent.dataTransfer.types.length; i++) {
-				//   o.textContent += aEvent.dataTransfer.types[i] + '\n';
-				// }
 			}
 
 			this.content.classList.add(CLASS_EDIT_BLOCK);
 			this.content.onclick = Edit.updateUI;
-			this.content.ondblclick = function(aEvent) {
-				Edit.updateUI();
-				if (aEvent.target.localName == 'img') {
-					Actions.imageAction(aEvent.target);
-				}
-			};
 			this.content.ondragenter = this.content.ondrop = onDragOver;
 			this.content.contentEditable = true;
 			this.content.onfocus = function() {
@@ -516,7 +440,6 @@
 			}
 
 			var chain = [];
-			var leafNode = node.nodeType == 1 ? node : null;
 			var blockNode = null;
 			var bold = false;
 			var italic = false;
@@ -586,10 +509,6 @@
 			ToolbarUI.setButtonState('olist', oList, image);
 			ToolbarUI.setButtonState('indent', false, !uList && !oList);
 			ToolbarUI.setButtonState('outdent', false, !uList && !oList);
-			ToolbarUI.setButtonState('image', false, image);
-			ToolbarUI.setButtonState('im_alignleft', image && leafNode.classList.contains(CLASS_ALIGN_LEFT), !image);
-			ToolbarUI.setButtonState('im_aligncenter', image && leafNode.classList.contains(CLASS_ALIGN_CENTER), !image);
-			ToolbarUI.setButtonState('im_alignright', image && leafNode.classList.contains(CLASS_ALIGN_RIGHT), !image);
 
 			NodeTypeUI.setNodeType(blockNode.localName);
 		},
