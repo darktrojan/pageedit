@@ -7,8 +7,9 @@ var _loadList = [];
 	window.addEventListener('load', callLoadFunctions, false);
 
 	function callLoadFunctions(aEvent) {
-		if (aEvent.type == 'readystatechange' && document.readyState != 'complete')
+		if (aEvent.type == 'readystatechange' && document.readyState != 'complete') {
 			return;
+		}
 
 		// if (console && 'info' in console)
 		// 	console.info('Performing load functions on ' + aEvent.type + ' event');
@@ -21,8 +22,9 @@ var _loadList = [];
 			try {
 				_loadList[i]();
 			} catch (e) {
-				if (console && 'error' in console)
+				if (console && 'error' in console) {
 					console.error(e);
+				}
 			}
 		}
 	}
@@ -52,8 +54,9 @@ function addHandlers(aHandlers) {
 				nodes = document.querySelectorAll(selector);
 			}
 
-			for (var i = 0, iCount = nodes.length; i < iCount; i++)
+			for (var i = 0, iCount = nodes.length; i < iCount; i++) {
 				nodes[i]['on' + eventType] = aHandlers[eventType][selector];
+			}
 		}
 	}
 }
@@ -61,14 +64,16 @@ function addHandlers(aHandlers) {
 function createElement(aSelector, aTextContent, aAttributes) {
 	var match = /^([\w-]+)(#[\w-]+)?((\.[\w-]+)*)$/.exec(aSelector);
 	if (!match) {
-		if (console && 'error' in console)
+		if (console && 'error' in console) {
 			console.error('Invalid selector string in call to .createElement()');
+		}
 		return null;
 	}
 
 	var element = document.createElement(match[1]);
-	if (match[2])
+	if (match[2]) {
 		element.id = match[2].substr(1);
+	}
 
 	var remainder = match[3];
 
@@ -77,26 +82,30 @@ function createElement(aSelector, aTextContent, aAttributes) {
 		remainder = match[2];
 	}
 
-	if (typeof aTextContent == 'string' || typeof aTextContent == 'number')
+	if (typeof aTextContent == 'string' || typeof aTextContent == 'number') {
 		element.appendChild(document.createTextNode(aTextContent));
+	}
 
-	for (var a in aAttributes)
+	for (var a in aAttributes) {
 		element.setAttribute(a, aAttributes[a]);
+	}
 
 	return element;
 }
 
 Element.prototype.clearChildNodes = function() {
-	while (this.lastChild)
+	while (this.lastChild) {
 		this.removeChild(this.lastChild);
+	}
 };
 
 Element.prototype.append = function(aSelector, aTextContent, aAttributes) {
 	var node;
-	if (aSelector)
+	if (aSelector) {
 		node = createElement(aSelector, aTextContent, aAttributes);
-	else
+	} else {
 		node = document.createTextNode(aTextContent);
+	}
 
 	this.appendChild(node);
 	return node;
@@ -104,8 +113,9 @@ Element.prototype.append = function(aSelector, aTextContent, aAttributes) {
 
 Element.prototype.appendMany = function(aArguments) {
 	var nodes = [];
-	for (var i = 0; i < aArguments.length; i++)
+	for (var i = 0; i < aArguments.length; i++) {
 		nodes.push(this.append(aArguments[i][0], aArguments[i][1], aArguments[i][2]));
+	}
 	return nodes;
 };
 
@@ -113,8 +123,9 @@ Element.prototype.ancestor = function(aSelector) {
 	// This differs from the regexp in createElement in that the node name is optional.
 	var match = /^([\w-]+)?(#[\w-]+)?((\.[\w-]+)*)$/.exec(aSelector);
 	if (!match) {
-		if (console && 'error' in console)
+		if (console && 'error' in console) {
 			console.error('Invalid selector string in call to .ancestor()');
+		}
 		return null;
 	}
 
@@ -140,8 +151,9 @@ Element.prototype.ancestor = function(aSelector) {
 					break;
 				}
 			}
-			if (matches)
+			if (matches) {
 				return element;
+			}
 		}
 		element = element.parentNode;
 	}

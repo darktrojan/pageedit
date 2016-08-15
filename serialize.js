@@ -1,27 +1,33 @@
 var noEndTag = ['br', 'hr', 'img', 'input', 'link', 'meta'];
 var blocks = ['div', 'h1', 'h2', 'h3', 'p', 'ol', 'ul'];
 
+/* exported serialize */
 function serialize(node, outer) {
-	if (node.nodeType != 1)
+	if (node.nodeType != 1) {
 		return escapeHTML(node.nodeValue);
+	}
 
-	if (node.localName == 'br' && !node.nextSibling)
+	if (node.localName == 'br' && !node.nextSibling) {
 		return '';
+	}
 
-	str = '';
+	var str = '';
 	if (outer) {
 		str += '<' + node.localName;
 		for (var i = 0; i < node.attributes.length; i++) {
 			var attribute = node.attributes[i];
-			if (attribute.name[0] == '_')
+			if (attribute.name[0] == '_') {
 				continue;
-			if (attribute.name == 'style' && attribute.value == '')
+			}
+			if (attribute.name == 'style' && attribute.value == '') {
 				continue;
+			}
 			str += ' ' + attribute.name + '=';
 			str += '"' + attribute.value + '"';
 		}
-		if (noEndTag.indexOf(node.localName) >= 0 && node.childNodes.length == 0)
+		if (noEndTag.indexOf(node.localName) >= 0 && node.childNodes.length == 0) {
 			return str + '/>';
+		}
 		str += '>';
 	}
 
@@ -33,8 +39,9 @@ function serialize(node, outer) {
 
 	if (outer) {
 		str += '</' + node.localName + '>';
-		if (blocks.indexOf(node.localName) >= 0)
+		if (blocks.indexOf(node.localName) >= 0) {
 			str += '\n';
+		}
 	}
 
 	return str;
