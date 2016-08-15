@@ -1,9 +1,0 @@
-[submodule "shim"]
-	path = shim
-	url = git://github.com/darktrojan/shim.js.git
-[submodule "extend"]
-	path = extend
-	url = git://github.com/darktrojan/extend.js.git
-[submodule "dragdrop"]
-	path = dragdrop
-	url = git://github.com/darktrojan/dragdrop.git
