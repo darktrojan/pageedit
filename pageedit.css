@@ -6,7 +6,6 @@
 	padding: 5px 0;
 	background-color: #f7f7f7;
 	border-bottom: 1px #ddd solid;
-		-webkit-transition: top 250ms;
 	transition: top 250ms;
 	text-align: center;
 	z-index: 50;
@@ -41,10 +40,11 @@
 	overflow: hidden;
 	cursor: pointer;
 }
-.edit_nodetype_item:hover,
+.edit_nodetype_item:hover {
+	background-color: highlight !important;
+}
 .edit_nodetype_item:hover > * {
 	color: highlighttext !important;
-	background-color: highlight !important;
 }
 .edit_nodetype_item + .edit_nodetype_item {
 	border-top: none;
@@ -63,8 +63,6 @@
 #edit_toolbar button,
 #edit_toolbar select,
 #edit_toolbar input[type="button"] {
-  		filter: progid:DXImageTransform.Microsoft.Gradient(StartColorStr=#ffffff, EndColorStr=#cccccc);
-		background: -webkit-linear-gradient(#fff, #eee 10%, #ddd 90%, #ccc);
 	background: linear-gradient(#fff, #eee 10%, #ddd 90%, #ccc);
 	margin: 2px;
 	border: 1px #ccc solid;
@@ -91,15 +89,13 @@ button#edit_link {
 	color: blue;
 }
 #edit_toolbar button.edit_selected {
-  		filter: progid:DXImageTransform.Microsoft.Gradient(StartColorStr=#cccccc, EndColorStr=#ffffff);
-		background: -webkit-linear-gradient(#ccc, #ddd 10%, #eee 90%, #fff);
 	background: linear-gradient(#ccc, #ddd 10%, #eee 90%, #fff);
 }
-#edit_toolbar button.edit_disabled {
+#edit_toolbar button:disabled {
 	background: #ddd;
 	color: #999;
 }
-#edit_toolbar button#edit_link.edit_disabled {
+#edit_toolbar button#edit_link:disabled {
 	color: #99f;
 }
 #edit_toolbar span.edit_radio_buttons {

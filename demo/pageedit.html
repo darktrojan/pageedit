@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="../pageedit.css"/>
 <style type="text/css">
 body {
-	margin: 4em 2em;
+	margin: 4em 1em 1em;
 	font-family: droid sans, sans-serif;
 	font-size: 14px;
 	line-height: 1.25em;
@@ -13,38 +13,53 @@ body {
 h1, h2, h3 {
 	line-height: 1.25em;
 }
-#output {
+#left, #right {
+	flex: 1;
+	margin: 1em;
+}
+textarea {
+	width: 100%;
+	height: 400px;
+	box-sizing: border-box;
 	white-space: pre-wrap;
+	resize: vertical;
 }
 </style>
 </head>
 <body>
 
-<div class="editme" style="float: left; width: 60%;"><h1><i>L</i>orem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</h1><p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p><p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p><h3>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</h3><p>Italic: <i>italic</i>, <em>italic</em>.</p><p>Bold: <b>bold</b>, <strong>bold</strong>.</p><p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p><ul><li>Duis aute irure</li><li>dolor in reprehenderit</li><li>in voluptate velit esse cillum</li><li>dolore eu fugiat nulla pariatur.</li></ul></div>
-
-<div style="margin-left: 65%">
-	<button onclick="output();">Display HTML</button>
-	<pre id="output"></pre>
+<div style="display: flex">
+	<div id="left"></div>
+	<div id="right">
+		<button onclick="read_input();">Read HTML</button>
+		<button onclick="write_output();">Display HTML</button><br />
+		<textarea id="output"><h1><i>L</i>orem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</h1><p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p><p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p><h3>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</h3><p>Italic: <i>italic</i>, <em>italic</em>.</p><p>Bold: <b>bold</b>, <strong>bold</strong>.</p><p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p><ul><li>Duis aute irure</li><li>dolor in reprehenderit</li><li>in voluptate velit esse cillum</li><li>dolore eu fugiat nulla pariatur.</li></ul></textarea>
+	</div>
 </div>
-
-<div style="clear: both;"></div>
 
 <script src="../extend.js"></script>
 <script src="../serialize.js"></script>
 <script src="../pageedit.js"></script>
 <script>
 
-var editables = document.getElementsByClassName('editme');
-for (var i = 0; i < editables.length; i++) {
-	new Edit.EditArea(editables[i]);
-}
+var output = document.querySelector('textarea');
+var editable = document.createElement('div');
+document.querySelector('div#left').appendChild(editable);
+
+new Edit.EditArea(editable);
+
 Edit.linkCallback = function(aRangeText) {
 	alert(aRangeText);
-	return 'about:blank';
+	return '#';
 };
 
-function output() {
-	$('output').textContent = editables[0].editArea.output();
+read_input();
+
+function read_input() {
+	editable.editArea.input(output.value);
+}
+function write_output() {
+	output.value = editable.editArea.output();
 }
 
 </script>

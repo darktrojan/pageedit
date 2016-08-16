@@ -3,7 +3,7 @@
 	var blocks = ['h1', 'h2', 'h3', 'p', 'ul', 'ol', 'div', 'li'];
 
 	var CLASS_EDIT_BLOCK = 'edit_block', CLASS_SHOWN = 'edit_shown', CLASS_CURRENT = 'edit_current';
-	var CLASS_SELECTED = 'edit_selected', CLASS_DISABLED = 'edit_disabled', CLASS_PLACEHOLDER = 'edit_placeholder';
+	var CLASS_SELECTED = 'edit_selected', CLASS_PLACEHOLDER = 'edit_placeholder';
 
 	var scriptPath = '';
 	for (var i = 0; i < document.scripts.length; i++) {
@@ -73,12 +73,12 @@
 					items[i].classList.add(CLASS_SELECTED);
 					this.currentTypeItem = items[i];
 					this.button.textContent = items[i].textContent;
-					this.button.classList.remove('edit_disabled');
+					this.button.disabled = false;
 					return;
 				}
 			}
 			this.button.textContent = '\u00a0';
-			this.button.classList.add('edit_disabled');
+			this.button.disabled = true;
 		}
 	};
 
@@ -144,6 +144,8 @@
 					return;
 				}
 			}, false);
+
+			this.setInactive();
 		},
 		show: function() {
 			this.element.classList.add(CLASS_SHOWN);
@@ -162,9 +164,8 @@
 			return button;
 		},
 		setButtonState: function(aButton, aSelected, aDisabled) {
-			var classList = this.buttons[aButton].classList;
-			classList[aSelected ? 'add' : 'remove'](CLASS_SELECTED);
-			classList[aDisabled ? 'add' : 'remove'](CLASS_DISABLED);
+			this.buttons[aButton].classList[aSelected ? 'add' : 'remove'](CLASS_SELECTED);
+			this.buttons[aButton].disabled = aDisabled;
 		},
 		setChain: function(aText, aBold, aItalic, aUnderline, aLink) {
 			this.chain_display.textContent = aText;
@@ -172,6 +173,22 @@
 			this.chain_display.style.fontStyle = aItalic ? 'italic' : 'normal';
 			this.chain_display.style.textDecoration = aUnderline ? 'underline' : 'none';
 			this.chain_display.style.color = aLink ? 'blue' : '';
+		},
+		setInactive: function() {
+			this.setChain('', false, false, false, false);
+			this.setButtonState('bold', false, true);
+			this.setButtonState('italic', false, true);
+			this.setButtonState('underline', false, true);
+			this.setButtonState('justifyleft', false, true);
+			this.setButtonState('justifycenter', false, true);
+			this.setButtonState('justifyright', false, true);
+			this.setButtonState('justifyfull', false, true);
+			this.setButtonState('link', false, true);
+			this.setButtonState('ulist', false, true);
+			this.setButtonState('olist', false, true);
+			this.setButtonState('indent', false, true);
+			this.setButtonState('outdent', false, true);
+			NodeTypeUI.setNodeType(null);
 		}
 	};
 
@@ -186,17 +203,17 @@
 			var button = ToolbarUI.buttons.link;
 			if (button.classList.contains(CLASS_SELECTED)) {
 				var node = Edit.savedRange.startContainer;
-				if (node.nodeType == 3 && Edit.savedRange.startOffset == node.length && node.nextSibling) {
+				if (node.nodeType == Node.TEXT_NODE && Edit.savedRange.startOffset == node.length && node.nextSibling) {
 					node = node.nextSibling;
 				}
 				if (node.childNodes.length == 1) {
 					node = node.firstChild;
 				}
-				if (node.nodeType == 1) {
+				if (node.nodeType == Node.ELEMENT_NODE) {
 					node = node.childNodes[Edit.savedRange.startOffset];
 				}
 				while (node) {
-					if (node.nodeType == 1 && node.localName == 'a') {
+					if (node.nodeType == Node.ELEMENT_NODE && node.localName == 'a') {
 						break;
 					}
 					node = node.parentNode;
@@ -238,12 +255,12 @@
 			}
 
 			var list = Edit.savedRange.startContainer;
-			if (list.nodeType == 1) {
+			if (list.nodeType == Node.ELEMENT_NODE) {
 				list = list.childNodes[Edit.savedRange.startOffset];
 			}
 
 			while (list) {
-				if (list.nodeType == 1) {
+				if (list.nodeType == Node.ELEMENT_NODE) {
 					if (list.localName == 'ul' || list.localName == 'ol') {
 						blockNode = list;
 						break;
@@ -265,7 +282,7 @@
 					var n;
 					while (n = li.firstChild) {
 						if ((!parent.classList.contains(CLASS_EDIT_BLOCK)) ||
-								(n.nodeType == 1 && blocks.indexOf(n.localName) >= 0)) {
+								(n.nodeType == Node.ELEMENT_NODE && blocks.indexOf(n.localName) >= 0)) {
 							parent.insertBefore(n, next);
 							Edit.savedRange.setEndAfter(n);
 						} else {
@@ -326,11 +343,16 @@
 			this.content.onblur = function() {
 				for (var i = 0; i < this.childNodes.length; i++) {
 					var node = this.childNodes[i];
-					if (node.nodeType == 3) {
-						this.replaceChild(createElement('p', node.nodeValue), node);
+					if (node.nodeType == Node.TEXT_NODE) {
+						if (node.nodeValue.trim()) {
+							this.replaceChild(createElement('p', node.nodeValue), node);
+						} else {
+							node.remove();
+							i--;
+						}
 					}
 				}
-				this._placeholder = null;
+				delete this._placeholder;
 				this.classList.remove(CLASS_PLACEHOLDER);
 				if (this.textContent == '') {
 					this.innerHTML = '<p>Edit this text</p>';
@@ -340,6 +362,23 @@
 					this._placeholder = this.firstChild;
 					this.classList.add(CLASS_PLACEHOLDER);
 				}
+
+				setTimeout(function() {
+					var element = document.activeElement;
+					while (element) {
+						if (element.nodeType == Node.ELEMENT_NODE) {
+							if (element.classList.contains(CLASS_EDIT_BLOCK)) {
+								Edit.setCurrentBlock(element);
+								return;
+							}
+							if (element.id == 'edit_toolbar') {
+								return;
+							}
+						}
+						element = element.parentNode;
+					}
+					Edit.setCurrentBlock(null);
+				}, 0);
 			};
 			this.content.onkeypress = function(aEvent) {
 				if (aEvent.ctrlKey) {
@@ -391,6 +430,11 @@
 				this.content.onfocus =
 				this.content.onkeyup = null;
 		},
+		input: function(html) {
+			this.content.innerHTML = html;
+			delete this.content._placeholder;
+			this.content.classList.remove(CLASS_PLACEHOLDER);
+		},
 		output: function() {
 			return serialize(this.content, false);
 		}
@@ -420,6 +464,7 @@
 				ToolbarUI.show();
 			} else {
 				ToolbarUI.hide();
+				ToolbarUI.setInactive();
 			}
 		},
 		updateUI: function() {
@@ -427,9 +472,9 @@
 			var node = range.startContainer;
 			var collapsed = range.collapsed;
 
-			if (node.nodeType == 1) {
+			if (node.nodeType == Node.ELEMENT_NODE) {
 				node = node.childNodes[range.startOffset];
-			} else if (node.nodeType == 3 && range.startOffset == node.length && node.nextSibling) {
+			} else if (node.nodeType == Node.TEXT_NODE && range.startOffset == node.length && node.nextSibling) {
 				node = node.nextSibling;
 			} else if (node.childNodes.length == 1) {
 				node = node.firstChild;
@@ -447,11 +492,11 @@
 			var link = false;
 			var uList = false;
 			var oList = false;
-			var image = node.nodeType == 1 && node.localName == 'img';
+			var image = node.nodeType == Node.ELEMENT_NODE && node.localName == 'img';
 
 			do {
 				var name;
-				if (node.nodeType == 1) {
+				if (node.nodeType == Node.ELEMENT_NODE) {
 					name = node.localName;
 					if (node.id) {
 						name += '#' + node.id;
@@ -479,7 +524,7 @@
 					if (node.localName == 'ol' && !uList) {
 						oList = true;
 					}
-				} else if (node.nodeType == 3) {
+				} else if (node.nodeType == Node.TEXT_NODE) {
 					name = '#text';//(' + node.length + ')';
 				}
 
@@ -520,13 +565,13 @@
 			}
 
 			node = range.startContainer;
-			if (node.nodeType == 1) {
+			if (node.nodeType == Node.ELEMENT_NODE) {
 				node = node.childNodes[range.startOffset];
 			}
 
 			var blockNode = null;
 			while (node) {
-				if (node.nodeType == 1 && node.classList.contains(CLASS_EDIT_BLOCK)) {
+				if (node.nodeType == Node.ELEMENT_NODE && node.classList.contains(CLASS_EDIT_BLOCK)) {
 					break;
 				}
 				blockNode = node;
@@ -558,20 +603,6 @@
 	};
 
 	ToolbarUI.init();
-	document.documentElement.addEventListener('click', function(aEvent) {
-		var element = aEvent.target;
-		while (element) {
-			if (element.nodeType == 1 &&
-					(element.classList.contains(CLASS_EDIT_BLOCK) ||
-					element.id == 'edit_toolbar' ||
-					element.id == 'darkbox-a' ||
-					element.id == 'darkbox-b')) {
-				return;
-			}
-			element = element.parentNode;
-		}
-		Edit.setCurrentBlock(null);
-	}, false);
 
 	window.Edit = Edit;
 })();
