@@ -38,20 +38,20 @@
 				'<div class="edit_nodetype_item" data-tag="h3"><h3>Heading 3</h3></div>' +
 				'<div class="edit_nodetype_item" data-tag="p"><p>Paragraph</p></div>' +
 				'<div class="edit_nodetype_item" data-tag="pre"><pre>Preformatted</pre></div>';
-			this.dropdown.onclick = function(aEvent) {
-				self.dropdownClick(aEvent);
+			this.dropdown.onclick = function(event) {
+				self.dropdownClick(event);
 			};
 
-			document.documentElement.addEventListener('click', function(aEvent) {
-				if (!aEvent.target.ancestor('#edit_nodetype_container')) {
+			document.documentElement.addEventListener('click', function(event) {
+				if (!event.target.ancestor('#edit_nodetype_container')) {
 					self.dropdown.classList.remove(CLASS_SHOWN);
 				}
 			}, false);
 
 			return this.container;
 		},
-		dropdownClick: function(aEvent) {
-			var item = aEvent.target.ancestor('.edit_nodetype_item');
+		dropdownClick: function(event) {
+			var item = event.target.ancestor('.edit_nodetype_item');
 			if (!item) {
 				return;
 			}
@@ -62,14 +62,14 @@
 			this.button.textContent = item.textContent;
 			this.dropdown.classList.remove(CLASS_SHOWN);
 		},
-		setNodeType: function(aText) {
+		setNodeType: function(text) {
 			if (this.currentTypeItem) {
 				this.currentTypeItem.classList.remove(CLASS_SELECTED);
 			}
 
 			var items = this.dropdown.querySelectorAll('.edit_nodetype_item');
 			for (var i = 0; i < items.length; i++) {
-				if (items[i].dataset.tag == aText) {
+				if (items[i].dataset.tag == text) {
 					items[i].classList.add(CLASS_SELECTED);
 					this.currentTypeItem = items[i];
 					this.button.textContent = items[i].textContent;
@@ -119,13 +119,13 @@
 
 			this.chain_display = this.element.append('div#edit_chain');
 
-			this.element.addEventListener('mousedown', function(aEvent) {
-				if (aEvent.target == this) {
-					aEvent.preventDefault();
+			this.element.addEventListener('mousedown', function(event) {
+				if (event.target == this) {
+					event.preventDefault();
 				}
 			}, false);
-			this.element.addEventListener('click', function(aEvent) {
-				var id = aEvent.target.localName == 'img' ? aEvent.target.parentNode.id : aEvent.target.id;
+			this.element.addEventListener('click', function(event) {
+				var id = event.target.localName == 'img' ? event.target.parentNode.id : event.target.id;
 				switch (id) {
 				case 'edit_bold':
 				case 'edit_italic':
@@ -159,26 +159,26 @@
 		hide: function() {
 			this.element.classList.remove(CLASS_SHOWN);
 		},
-		addButton: function(aGroup, aName, aText, aImage) {
-			var button = aGroup.append('button#edit_' + aName, aText);
+		addButton: function(group, name, text, image) {
+			var button = group.append('button#edit_' + name, text);
 			button.onmousedown = Edit.saveSelection;
 			button.onmouseup = Edit.restoreSelection;
-			if (aImage) {
-				button.append('img', null, { 'src': scriptPath + 'icons/' + aImage });
+			if (image) {
+				button.append('img', null, { 'src': scriptPath + 'icons/' + image });
 			}
-			this.buttons[aName] = button;
+			this.buttons[name] = button;
 			return button;
 		},
-		setButtonState: function(aButton, aSelected, aDisabled) {
-			this.buttons[aButton].classList[aSelected ? 'add' : 'remove'](CLASS_SELECTED);
-			this.buttons[aButton].disabled = aDisabled;
+		setButtonState: function(button, selected, disabled) {
+			this.buttons[button].classList[selected ? 'add' : 'remove'](CLASS_SELECTED);
+			this.buttons[button].disabled = disabled;
 		},
-		setChain: function(aText, aBold, aItalic, aUnderline, aLink) {
-			this.chain_display.textContent = aText;
-			this.chain_display.style.fontWeight = aBold ? 'bold' : 'normal';
-			this.chain_display.style.fontStyle = aItalic ? 'italic' : 'normal';
-			this.chain_display.style.textDecoration = aUnderline ? 'underline' : 'none';
-			this.chain_display.style.color = aLink ? 'blue' : '';
+		setChain: function(text, bold, italic, underline, link) {
+			this.chain_display.textContent = text;
+			this.chain_display.style.fontWeight = bold ? 'bold' : 'normal';
+			this.chain_display.style.fontStyle = italic ? 'italic' : 'normal';
+			this.chain_display.style.textDecoration = underline ? 'underline' : 'none';
+			this.chain_display.style.color = link ? 'blue' : '';
 		},
 		setInactive: function() {
 			this.setChain('', false, false, false, false);
@@ -200,11 +200,11 @@
 	};
 
 	var Actions = {
-		action: function(aCommand, aValue) {
+		action: function(command, value) {
 			if (!Edit.currentBlock) {
 				return;
 			}
-			document.execCommand(aCommand, false, aValue);
+			document.execCommand(command, false, value);
 		},
 		linkAction: function() {
 			var button = ToolbarUI.buttons.link;
@@ -228,21 +228,21 @@
 				Edit.savedRange.selectNode(node);
 				this.action('unlink', null);
 			} else {
-				var href;
+				var returnedHref;
 				if (typeof Edit.linkCallback == 'function') {
-					href = Edit.linkCallback(Edit.savedRange.toString(), function(aHref) {
+					returnedHref = Edit.linkCallback(Edit.savedRange.toString(), function(href) {
 						Edit.restoreSelection();
-						Actions.action('createlink', aHref);
+						Actions.action('createlink', href);
 					});
 				} else {
-					href = prompt('Type or paste a link:');
+					returnedHref = prompt('Type or paste a link:');
 				}
-				if (href) {
-					this.action('createlink', href);
+				if (returnedHref) {
+					this.action('createlink', returnedHref);
 				}
 			}
 		},
-		listAction: function(aListType) {
+		listAction: function(listType) {
 			var currentListType = null;
 			if (ToolbarUI.buttons.ulist.classList.contains(CLASS_SELECTED)) {
 				currentListType = 'ul';
@@ -256,7 +256,7 @@
 			}
 
 			if (!currentListType) {
-				this.action(aListType == 'ul' ? 'insertUnorderedList' : 'insertOrderedList', null);
+				this.action(listType == 'ul' ? 'insertUnorderedList' : 'insertOrderedList', null);
 				Edit.updateUI();
 				return;
 			}
@@ -280,7 +280,7 @@
 			}
 			var parent = blockNode.parentNode;
 
-			if (currentListType == aListType) { // already a list, remove
+			if (currentListType == listType) { // already a list, remove
 				var next = blockNode.nextSibling;
 				Edit.savedRange.setStartAfter(blockNode);
 				for (var i = 0; i < blockNode.childElementCount; i++) {
@@ -304,7 +304,7 @@
 				parent.removeChild(blockNode);
 
 			} else { // convert to other type of list
-				var newList = document.createElement(aListType);
+				var newList = document.createElement(listType);
 				var li;
 				while (li = blockNode.firstChild) {
 					newList.appendChild(li);
@@ -339,8 +339,8 @@
 		}
 	};
 
-	function EditArea(aContent) {
-		this.content = aContent;
+	function EditArea(content) {
+		this.content = content;
 		this.init();
 	}
 	EditArea.prototype = {
@@ -403,20 +403,20 @@
 					Edit.setCurrentBlock(null);
 				}, 0);
 			};
-			this.content.onkeypress = function(aEvent) {
-				if (aEvent.ctrlKey) {
-					switch (aEvent.charCode) {
+			this.content.onkeypress = function(event) {
+				if (event.ctrlKey) {
+					switch (event.charCode) {
 					case 98:
 						Edit.Actions.action('bold', null);
-						aEvent.preventDefault();
+						event.preventDefault();
 						break;
 					case 105:
 						Edit.Actions.action('italic', null);
-						aEvent.preventDefault();
+						event.preventDefault();
 						break;
 					case 117:
 						Edit.Actions.action('underline', null);
-						aEvent.preventDefault();
+						event.preventDefault();
 						break;
 					}
 				}
@@ -522,14 +522,14 @@
 		NodeTypeUI: NodeTypeUI,
 		EditArea: EditArea,
 
-		setCurrentBlock: function(aDiv) {
-			if (aDiv == this.currentBlock) {
+		setCurrentBlock: function(div) {
+			if (div == this.currentBlock) {
 				return;
 			}
 			if (this.currentBlock) {
 				this.currentBlock.classList.remove(CLASS_CURRENT);
 			}
-			this.currentBlock = aDiv;
+			this.currentBlock = div;
 			this.range = null;
 			if (this.currentBlock) {
 				this.currentBlock.classList.add(CLASS_CURRENT);

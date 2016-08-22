@@ -11,7 +11,7 @@
 			}
 		],
 		"mozilla/no-aArgs": [
-			"off"
+			"warn"
 		],
 		"arrow-body-style": [
 			"error",

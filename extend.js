@@ -6,13 +6,13 @@ var _loadList = [];
 	document.addEventListener('readystatechange', callLoadFunctions, false);
 	window.addEventListener('load', callLoadFunctions, false);
 
-	function callLoadFunctions(aEvent) {
-		if (aEvent.type == 'readystatechange' && document.readyState != 'complete') {
+	function callLoadFunctions(event) {
+		if (event.type == 'readystatechange' && document.readyState != 'complete') {
 			return;
 		}
 
 		// if (console && 'info' in console)
-		// 	console.info('Performing load functions on ' + aEvent.type + ' event');
+		// 	console.info('Performing load functions on ' + event.type + ' event');
 
 		window.removeEventListener('DOMContentLoaded', callLoadFunctions, false);
 		document.removeEventListener('readystatechange', callLoadFunctions, false);
@@ -30,16 +30,16 @@ var _loadList = [];
 	}
 })();
 
-function $(aID) {
-	return document.getElementById(aID);
+function $(id) {
+	return document.getElementById(id);
 }
 
-function addHandlers(aHandlers) {
+function addHandlers(handlers) {
 	var idRegExp = /^#\w+$/;
 	var classRegExp = /^\.\w+$/;
 
-	for (var eventType in aHandlers) {
-		for (var selector in aHandlers[eventType]) {
+	for (var eventType in handlers) {
+		for (var selector in handlers[eventType]) {
 			var nodes;
 			if (idRegExp.test(selector)) {
 				var node = $(selector.substring(1));
@@ -55,14 +55,14 @@ function addHandlers(aHandlers) {
 			}
 
 			for (var i = 0, iCount = nodes.length; i < iCount; i++) {
-				nodes[i]['on' + eventType] = aHandlers[eventType][selector];
+				nodes[i]['on' + eventType] = handlers[eventType][selector];
 			}
 		}
 	}
 }
 
-function createElement(aSelector, aTextContent, aAttributes) {
-	var match = /^([\w-]+)(#[\w-]+)?((\.[\w-]+)*)$/.exec(aSelector);
+function createElement(selector, textContent, attributes) {
+	var match = /^([\w-]+)(#[\w-]+)?((\.[\w-]+)*)$/.exec(selector);
 	if (!match) {
 		if (console && 'error' in console) {
 			console.error('Invalid selector string in call to .createElement()');
@@ -82,12 +82,12 @@ function createElement(aSelector, aTextContent, aAttributes) {
 		remainder = match[2];
 	}
 
-	if (typeof aTextContent == 'string' || typeof aTextContent == 'number') {
-		element.appendChild(document.createTextNode(aTextContent));
+	if (typeof textContent == 'string' || typeof textContent == 'number') {
+		element.appendChild(document.createTextNode(textContent));
 	}
 
-	for (var a in aAttributes) {
-		element.setAttribute(a, aAttributes[a]);
+	for (var a in attributes) {
+		element.setAttribute(a, attributes[a]);
 	}
 
 	return element;
@@ -99,29 +99,29 @@ Element.prototype.clearChildNodes = function() {
 	}
 };
 
-Element.prototype.append = function(aSelector, aTextContent, aAttributes) {
+Element.prototype.append = function(selector, textContent, attributes) {
 	var node;
-	if (aSelector) {
-		node = createElement(aSelector, aTextContent, aAttributes);
+	if (selector) {
+		node = createElement(selector, textContent, attributes);
 	} else {
-		node = document.createTextNode(aTextContent);
+		node = document.createTextNode(textContent);
 	}
 
 	this.appendChild(node);
 	return node;
 };
 
-Element.prototype.appendMany = function(aArguments) {
+Element.prototype.appendMany = function(args) {
 	var nodes = [];
-	for (var i = 0; i < aArguments.length; i++) {
-		nodes.push(this.append(aArguments[i][0], aArguments[i][1], aArguments[i][2]));
+	for (var i = 0; i < args.length; i++) {
+		nodes.push(this.append(args[i][0], args[i][1], args[i][2]));
 	}
 	return nodes;
 };
 
-Element.prototype.ancestor = function(aSelector) {
+Element.prototype.ancestor = function(selector) {
 	// This differs from the regexp in createElement in that the node name is optional.
-	var match = /^([\w-]+)?(#[\w-]+)?((\.[\w-]+)*)$/.exec(aSelector);
+	var match = /^([\w-]+)?(#[\w-]+)?((\.[\w-]+)*)$/.exec(selector);
 	if (!match) {
 		if (console && 'error' in console) {
 			console.error('Invalid selector string in call to .ancestor()');
