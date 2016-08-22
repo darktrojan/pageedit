@@ -1,4 +1,3 @@
-/* globals createElement, serialize */
 (function() {
 	var blocks = ['h1', 'h2', 'h3', 'p', 'ul', 'ol', 'div', 'li'];
 
@@ -24,14 +23,20 @@
 		init: function() {
 			var self = this;
 
-			this.container = createElement('div#edit_nodetype_container');
+			this.container = document.createElement('div');
+			this.container.id = 'edit_nodetype_container';
 			this.container.onmousedown = Edit.saveSelection;
-			this.button = this.container.append('button#edit_nodetype_button', '\u00a0');
+			this.button = document.createElement('button');
+			this.button.id = 'edit_nodetype_button';
+			this.button.textContent = '\u00a0';
+			this.container.appendChild(this.button);
 			this.button.onclick = function() {
 				self.dropdown.classList.toggle(CLASS_SHOWN);
 				this.blur();
 			};
-			this.dropdown = this.container.append('div#edit_nodetype_dropdown');
+			this.dropdown = document.createElement('div');
+			this.dropdown.id = 'edit_nodetype_dropdown';
+			this.container.appendChild(this.dropdown);
 			this.dropdown.innerHTML =
 				'<div class="edit_nodetype_item" data-tag="h1"><h1>Heading 1</h1></div>' +
 				'<div class="edit_nodetype_item" data-tag="h2"><h2>Heading 2</h2></div>' +
@@ -43,7 +48,7 @@
 			};
 
 			document.documentElement.addEventListener('click', function(event) {
-				if (!event.target.ancestor('#edit_nodetype_container')) {
+				if (!(Edit.NodeTypeUI.container.compareDocumentPosition(event.target) & Node.DOCUMENT_POSITION_CONTAINED_BY)) {
 					self.dropdown.classList.remove(CLASS_SHOWN);
 				}
 			}, false);
@@ -51,15 +56,15 @@
 			return this.container;
 		},
 		dropdownClick: function(event) {
-			var item = event.target.ancestor('.edit_nodetype_item');
-			if (!item) {
-				return;
+			var target = event.target;
+			if (!target.classList.contains('edit_nodetype_item')) {
+				target = target.parentNode;
 			}
 
 			Edit.restoreSelection();
-			Edit.Actions.action('formatblock', item.dataset.tag);
+			Edit.Actions.action('formatblock', target.dataset.tag);
 
-			this.button.textContent = item.textContent;
+			this.button.textContent = target.textContent;
 			this.dropdown.classList.remove(CLASS_SHOWN);
 		},
 		setNodeType: function(text) {
@@ -88,36 +93,48 @@
 		chain_display: null,
 
 		init: function() {
-			this.element = document.body.append('div#edit_toolbar');
+			this.element = document.createElement('div');
+			this.element.id = 'edit_toolbar';
+			document.body.appendChild(this.element);
 
 			this.element.appendChild(NodeTypeUI.init());
 
-			var group = this.element.append('span');
+			var group = document.createElement('span');
+			this.element.appendChild(group);
 			this.addButton(group, 'bold', 'B');
 			this.addButton(group, 'italic', 'I');
 			this.addButton(group, 'underline', 'U');
 
-			group = this.element.append('span.edit_radio_buttons');
+			group = document.createElement('span');
+			group.classList.add('edit_radio_buttons');
+			this.element.appendChild(group);
 			this.addButton(group, 'justifyleft', null, 'text_align_left.png');
 			this.addButton(group, 'justifycenter', null, 'text_align_center.png');
 			this.addButton(group, 'justifyright', null, 'text_align_right.png');
 			this.addButton(group, 'justifyfull', null, 'text_align_justify.png');
 
-			group = this.element.append('span');
+			group = document.createElement('span');
+			this.element.appendChild(group);
 			this.addButton(group, 'link', 'a');
 
-			group = this.element.append('span.edit_radio_buttons');
+			group = document.createElement('span');
+			group.classList.add('edit_radio_buttons');
+			this.element.appendChild(group);
 			this.addButton(group, 'ulist', null, 'text_list_bullets.png');
 			this.addButton(group, 'olist', null, 'text_list_numbers.png');
 
-			group = this.element.append('span');
+			group = document.createElement('span');
+			this.element.appendChild(group);
 			this.addButton(group, 'indent', null, 'text_indent.png');
 			this.addButton(group, 'outdent', null, 'text_indent_remove.png');
 
-			group = this.element.append('span');
+			group = document.createElement('span');
+			this.element.appendChild(group);
 			this.addButton(group, 'image', null, 'picture.png');
 
-			this.chain_display = this.element.append('div#edit_chain');
+			this.chain_display = document.createElement('div');
+			this.chain_display.id = 'edit_chain';
+			this.element.appendChild(this.chain_display);
 
 			this.element.addEventListener('mousedown', function(event) {
 				if (event.target == this) {
@@ -160,11 +177,16 @@
 			this.element.classList.remove(CLASS_SHOWN);
 		},
 		addButton: function(group, name, text, image) {
-			var button = group.append('button#edit_' + name, text);
+			var button = document.createElement('button');
+			button.id = 'edit_' + name;
+			button.textContent = text;
+			group.appendChild(button);
 			button.onmousedown = Edit.saveSelection;
 			button.onmouseup = Edit.restoreSelection;
 			if (image) {
-				button.append('img', null, { 'src': scriptPath + 'icons/' + image });
+				var img = document.createElement('img');
+				img.src = scriptPath + 'icons/' + image;
+				button.appendChild(img);
 			}
 			this.buttons[name] = button;
 			return button;
@@ -286,8 +308,8 @@
 				for (var i = 0; i < blockNode.childElementCount; i++) {
 					var li = blockNode.children[i];
 					var p = document.createElement('p');
-					var n;
-					while (n = li.firstChild) {
+					var n = li.firstChild;
+					while (n) {
 						if ((!parent.classList.contains(CLASS_EDIT_BLOCK)) ||
 								(n.nodeType == Node.ELEMENT_NODE && blocks.indexOf(n.localName) >= 0)) {
 							parent.insertBefore(n, next);
@@ -295,6 +317,7 @@
 						} else {
 							p.appendChild(n);
 						}
+						n = li.firstChild;
 					}
 					if (p.childNodes.length) {
 						parent.insertBefore(p, next);
@@ -305,9 +328,10 @@
 
 			} else { // convert to other type of list
 				var newList = document.createElement(listType);
-				var li;
-				while (li = blockNode.firstChild) {
+				var li = blockNode.firstChild;
+				while (li) {
 					newList.appendChild(li);
+					li = blockNode.firstChild;
 				}
 				parent.replaceChild(newList, blockNode);
 				Edit.savedRange.selectNode(newList);
@@ -368,7 +392,9 @@
 					var node = this.childNodes[i];
 					if (node.nodeType == Node.TEXT_NODE) {
 						if (node.nodeValue.trim()) {
-							this.replaceChild(createElement('p', node.nodeValue), node);
+							var p = document.createElement('p');
+							p.textContent = node.nodeValue;
+							this.replaceChild(p, node);
 						} else {
 							node.remove();
 							i--;
@@ -423,8 +449,10 @@
 			};
 			this.content.onkeyup = function() {
 				if (this.textContent == '') {
-					this.clearChildNodes();
-					var p = this.append('p', 'Edit this text');
+					this.innerHTML = '';
+					var p = document.createElement('p');
+					p.textContent = 'Edit this text';
+					this.appendChild(p);
 					this._placeholder = p;
 
 					var selection = window.getSelection();
@@ -508,7 +536,74 @@
 			}
 		},
 		output: function() {
-			return serialize(this.content, false);
+			return Serializer.serialize(this.content, false);
+		}
+	};
+
+	var Serializer = {
+		escapeHTML: function(str) {
+			return str.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace(/"/g, '&quot;');
+		},
+		isBlock: function(node) {
+			if (!node || node.nodeType != Node.ELEMENT_NODE) {
+				return false;
+			}
+			return ['div', 'h1', 'h2', 'h3', 'p', 'ol', 'ul'].indexOf(node.localName) >= 0;
+		},
+		serialize: function(node, outer) {
+			if (node.nodeType == Node.TEXT_NODE) {
+				if (!node.nodeValue.trim() && (this.isBlock(node.previousSibling) || this.isBlock(node.nextSibling))) {
+					return '';
+				}
+				return this.escapeHTML(node.nodeValue);
+			} else if (node.nodeType != Node.ELEMENT_NODE) {
+				return '';
+			}
+
+			if (node.localName == 'br' && !node.nextSibling) {
+				return '';
+			}
+
+			var str = '';
+			if (outer) {
+				str += '<' + node.localName;
+				for (var i = 0; i < node.attributes.length; i++) {
+					var attribute = node.attributes[i];
+					if (attribute.name == 'contenteditable' || attribute.name == 'draggable') {
+						continue;
+					}
+					if (attribute.name[0] == '_') {
+						continue;
+					}
+					if (attribute.name == 'style' && attribute.value == '') {
+						continue;
+					}
+					str += ' ' + attribute.name + '=';
+					str += '"' + attribute.value + '"';
+				}
+				if (['br', 'hr', 'img', 'input', 'link', 'meta'].indexOf(node.localName) >= 0 && node.childNodes.length == 0) {
+					return str + '/>';
+				}
+				str += '>';
+			}
+
+			if (!node._placeholder) {
+				for (var i = 0; i < node.childNodes.length; i++) {
+					str += this.serialize(node.childNodes[i], true);
+				}
+			}
+
+			if (outer) {
+				str += '</' + node.localName + '>';
+				if (this.isBlock(node)) {
+					str += '\n';
+				}
+			}
+
+			return str;
 		}
 	};
 
@@ -520,6 +615,7 @@
 		Actions: Actions,
 		ToolbarUI: ToolbarUI,
 		NodeTypeUI: NodeTypeUI,
+		Serializer: Serializer,
 		EditArea: EditArea,
 
 		setCurrentBlock: function(div) {
