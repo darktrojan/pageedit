@@ -48,12 +48,16 @@ document.querySelector('div#left').appendChild(editable);
 
 new Edit.EditArea(editable);
 
-Edit.linkCallback = function(aRangeText) {
-	alert(aRangeText);
+Edit.linkCallback = function(rangeText) {
+	alert(rangeText);
 	return '#';
+};
+Edit.imagePromiseCallback = function(resolve, reject) {
+	resolve({src: 'smile.png', width: 75, height: 75});
 };
 
 read_input();
+editable.focus();
 
 function read_input() {
 	editable.editArea.input(output.value);

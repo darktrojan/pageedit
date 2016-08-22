@@ -118,6 +118,9 @@ button#edit_link {
 	width: 20em;
 	text-align: right;
 }
+.edit_block {
+	padding-bottom: 50px;
+}
 .edit_placeholder {
 	color: #999;
 }

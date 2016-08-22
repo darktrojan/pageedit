@@ -25,6 +25,9 @@ function serialize(node, outer) {
 		str += '<' + node.localName;
 		for (var i = 0; i < node.attributes.length; i++) {
 			var attribute = node.attributes[i];
+			if (attribute.name == 'contenteditable' || attribute.name == 'draggable') {
+				continue;
+			}
 			if (attribute.name[0] == '_') {
 				continue;
 			}

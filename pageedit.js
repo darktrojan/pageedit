@@ -114,6 +114,9 @@
 			this.addButton(group, 'indent', null, 'text_indent.png');
 			this.addButton(group, 'outdent', null, 'text_indent_remove.png');
 
+			group = this.element.append('span');
+			this.addButton(group, 'image', null, 'picture.png');
+
 			this.chain_display = this.element.append('div#edit_chain');
 
 			this.element.addEventListener('mousedown', function(aEvent) {
@@ -141,6 +144,9 @@
 				case 'edit_ulist':
 				case 'edit_olist':
 					Actions.listAction(id.substr(5, 2));
+					return;
+				case 'edit_image':
+					Actions.imageAction();
 					return;
 				}
 			}, false);
@@ -188,6 +194,7 @@
 			this.setButtonState('olist', false, true);
 			this.setButtonState('indent', false, true);
 			this.setButtonState('outdent', false, true);
+			this.setButtonState('image', false, true);
 			NodeTypeUI.setNodeType(null);
 		}
 	};
@@ -306,6 +313,29 @@
 				Edit.savedRange.selectNode(newList);
 			}
 			Edit.updateUI();
+		},
+		imageAction: function() {
+			if (typeof Edit.imagePromiseCallback == 'function') {
+				new Promise(Edit.imagePromiseCallback).then(function(imageAttributes) {
+					Edit.restoreSelection();
+					var block = Edit.getBlockNodeForSelection();
+					var newBlock = document.createElement('div');
+					newBlock.setAttribute('draggable', 'true');
+					newBlock.contentEditable = false;
+					var image = document.createElement('img');
+					image.setAttribute('src', imageAttributes.src);
+					if (imageAttributes.width) {
+						image.setAttribute('width', imageAttributes.width);
+					}
+					if (imageAttributes.height) {
+						image.setAttribute('height', imageAttributes.height);
+					}
+					newBlock.appendChild(image);
+					block.parentNode.insertBefore(newBlock, block);
+				});
+			} else {
+				console.error('No Edit.imagePromiseCallback.');
+			}
 		}
 	};
 
@@ -317,16 +347,9 @@
 		content: null,
 		init: function() {
 			this.content.editArea = this;
-			function onDragOver(aEvent) {
-				var hasFiles = aEvent.dataTransfer.files && aEvent.dataTransfer.files.length;
-				if (hasFiles) {
-					aEvent.preventDefault();
-				}
-			}
 
 			this.content.classList.add(CLASS_EDIT_BLOCK);
 			this.content.onclick = Edit.updateUI;
-			this.content.ondragenter = this.content.ondrop = onDragOver;
 			this.content.contentEditable = true;
 			this.content.onfocus = function() {
 				Edit.setCurrentBlock(this);
@@ -412,6 +435,49 @@
 				}
 				Edit.updateUI();
 			};
+			var draggedThing = null;
+			this.content.ondragstart = function(event) {
+				// console.log(event);
+				if (event.target.localName == 'img') {
+					event.dataTransfer.effectAllowed = 'move';
+					event.dataTransfer.clearData();
+					event.dataTransfer.setData('text/html', event.target.parentNode.outerHTML);
+					draggedThing = event.target.parentNode;
+				}
+				// console.log(event);
+			};
+			this.content.ondragenter = function(event) {
+				event.preventDefault();
+			};
+			this.content.ondrop = function(event) {
+				event.preventDefault();
+
+				var target = event.target;
+				// console.log(target);
+				if (this.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_CONTAINED_BY) {
+					while (target.parentNode != this) {
+						target = target.parentNode;
+						// console.log(target);
+					}
+					this.insertBefore(draggedThing, target);
+					return;
+				}
+
+				var bottom = this.getBoundingClientRect().bottom;
+				for (var i = event.clientY; i < bottom; i += 5) {
+					target = document.elementFromPoint(event.clientX, i);
+					// console.log(i, target);
+					if (target != this) {
+						while (target.parentNode != this) {
+							target = target.parentNode;
+						}
+						this.insertBefore(draggedThing, target);
+						return;
+					}
+				}
+				this.appendChild(draggedThing);
+			};
+
 
 			if (this.content.textContent == '') {
 				this.content.innerHTML = '<p>Edit this text</p>';
@@ -434,6 +500,12 @@
 			this.content.innerHTML = html;
 			delete this.content._placeholder;
 			this.content.classList.remove(CLASS_PLACEHOLDER);
+			var images = this.content.querySelectorAll('div > img');
+			for (var i = 0; i < images.length; i++) {
+				var div = images[i].parentNode;
+				div.setAttribute('draggable', 'true');
+				div.contentEditable = false;
+			}
 		},
 		output: function() {
 			return serialize(this.content, false);
@@ -554,6 +626,7 @@
 			ToolbarUI.setButtonState('olist', oList, image);
 			ToolbarUI.setButtonState('indent', false, !uList && !oList);
 			ToolbarUI.setButtonState('outdent', false, !uList && !oList);
+			ToolbarUI.setButtonState('image', false, image);
 
 			NodeTypeUI.setNodeType(blockNode.localName);
 		},
