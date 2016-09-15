@@ -40,6 +40,8 @@ textarea {
 <script src="../pageedit.js"></script>
 <script>
 
+/* globals Edit */
+
 var output = document.querySelector('textarea');
 var editable = document.createElement('div');
 document.querySelector('div#left').appendChild(editable);
@@ -50,18 +52,28 @@ Edit.linkCallback = function(rangeText) {
 	alert(rangeText);
 	return '#';
 };
-Edit.imagePromiseCallback = function(resolve, reject) {
-	resolve({src: 'smile.png', width: 75, height: 75});
+Edit.imageCallback = function() {
+	Edit.Actions.imageAction({src: 'smile.png', width: 75, height: 75});
 };
 
 read_input();
 editable.focus();
 
+/* exported read_input, write_output */
 function read_input() {
 	editable.editArea.input(output.value);
+	var images = editable.querySelectorAll('img');
+	for (var i = 0; i < images.length; i++) {
+		images[i].src = 'smile.png';
+	}
 }
 function write_output() {
-	output.value = editable.editArea.output();
+	var content = editable.editArea.content.cloneNode(true);
+	var images = content.querySelectorAll('img');
+	for (var i = 0; i < images.length; i++) {
+		images[i].src = 'frown.png';
+	}
+	output.value = Edit.Serializer.serialize(content);
 }
 
 </script>

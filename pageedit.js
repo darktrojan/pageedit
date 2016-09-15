@@ -163,7 +163,7 @@
 					Actions.listAction(id.substr(5, 2));
 					return;
 				case 'edit_image':
-					Actions.imageAction();
+					Actions.imageCallbackAction();
 					return;
 				}
 			}, false);
@@ -338,28 +338,32 @@
 			}
 			Edit.updateUI();
 		},
-		imageAction: function() {
-			if (typeof Edit.imagePromiseCallback == 'function') {
-				new Promise(Edit.imagePromiseCallback).then(function(imageAttributes) {
-					Edit.restoreSelection();
-					var block = Edit.getBlockNodeForSelection();
-					var newBlock = document.createElement('div');
-					newBlock.setAttribute('draggable', 'true');
-					newBlock.contentEditable = false;
-					var image = document.createElement('img');
-					image.setAttribute('src', imageAttributes.src);
-					if (imageAttributes.width) {
-						image.setAttribute('width', imageAttributes.width);
-					}
-					if (imageAttributes.height) {
-						image.setAttribute('height', imageAttributes.height);
-					}
-					newBlock.appendChild(image);
-					block.parentNode.insertBefore(newBlock, block);
-				});
+		imageCallbackAction: function() {
+			if (typeof Edit.imageCallback == 'function') {
+				Edit.saveSelection();
+				Edit.imageCallback();
 			} else {
-				console.error('No Edit.imagePromiseCallback.');
+				console.error('No Edit.imageCallback.');
 			}
+		},
+		imageAction: function(imageAttributes) {
+			Edit.restoreSelection();
+			setTimeout(function() {
+				var block = Edit.getBlockNodeForSelection();
+				var newBlock = document.createElement('div');
+				// newBlock.setAttribute('draggable', 'true');
+				// newBlock.contentEditable = false;
+				var image = document.createElement('img');
+				image.setAttribute('src', imageAttributes.src);
+				if (imageAttributes.width) {
+					image.setAttribute('width', imageAttributes.width);
+				}
+				if (imageAttributes.height) {
+					image.setAttribute('height', imageAttributes.height);
+				}
+				newBlock.appendChild(image);
+				block.parentNode.insertBefore(newBlock, block);
+			}, 0);
 		}
 	};
 
@@ -536,7 +540,7 @@
 			}
 		},
 		output: function() {
-			return Serializer.serialize(this.content, false);
+			return Serializer.serialize(this.content);
 		}
 	};
 
@@ -553,7 +557,10 @@
 			}
 			return ['div', 'h1', 'h2', 'h3', 'p', 'ol', 'ul'].indexOf(node.localName) >= 0;
 		},
-		serialize: function(node, outer) {
+		serialize: function(node) {
+			return this.serializeInternal(node, false);
+		},
+		serializeInternal: function(node, outer) {
 			if (node.nodeType == Node.TEXT_NODE) {
 				if (!node.nodeValue.trim() && (this.isBlock(node.previousSibling) || this.isBlock(node.nextSibling))) {
 					return '';
@@ -592,7 +599,7 @@
 
 			if (!node._placeholder) {
 				for (var i = 0; i < node.childNodes.length; i++) {
-					str += this.serialize(node.childNodes[i], true);
+					str += this.serializeInternal(node.childNodes[i], true);
 				}
 			}
 
@@ -734,9 +741,9 @@
 			}
 
 			node = range.startContainer;
-			if (node.nodeType == Node.ELEMENT_NODE) {
-				node = node.childNodes[range.startOffset];
-			}
+			// if (node.nodeType == Node.ELEMENT_NODE) {
+			// 	node = node.childNodes[range.startOffset];
+			// }
 
 			var blockNode = null;
 			while (node) {
@@ -766,7 +773,8 @@
 			var selection = window.getSelection();
 			selection.removeAllRanges();
 			selection.addRange(Edit.savedRange);
-			Edit.currentBlock.focus();
+			// Edit.currentBlock.focus();
+			Edit.savedRange.startContainer.focus();
 			setTimeout(Edit.updateUI, 0);
 		}
 	};
