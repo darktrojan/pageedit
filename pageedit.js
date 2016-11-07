@@ -229,7 +229,7 @@
 			if (!Edit.currentBlock) {
 				return;
 			}
-			Edit.currentDocument.execCommand(command, false, value);
+			Edit.currentWindow.document.execCommand(command, false, value);
 		},
 		linkAction: function() {
 			var button = ToolbarUI.buttons.link;
@@ -351,7 +351,7 @@
 		},
 		imageAction: function(imageAttributes) {
 			Edit.restoreSelection();
-			Edit.currentDocument.execCommand('insertImage', null, imageAttributes.src);
+			Edit.currentWindow.document.execCommand('insertImage', null, imageAttributes.src);
 		}
 	};
 
@@ -709,9 +709,11 @@
 			return null;
 		},
 		getRange: function() {
-			var selection = this.currentWindow.getSelection();
-			if (selection.rangeCount) {
-				return selection.getRangeAt(0);
+			if (this.currentWindow) {
+				var selection = this.currentWindow.getSelection();
+				if (selection.rangeCount) {
+					return selection.getRangeAt(0);
+				}
 			}
 			return null;
 		},
