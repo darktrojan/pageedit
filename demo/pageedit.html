@@ -43,21 +43,29 @@ textarea {
 /* globals Edit */
 
 var output = document.querySelector('textarea');
-var editable = document.createElement('div');
-document.querySelector('div#left').appendChild(editable);
+var iframe = document.createElement('iframe');
+iframe.style.width = iframe.style.height = '100%';
+document.querySelector('div#left').appendChild(iframe);
 
-new Edit.EditArea(editable);
+var editable;
+iframe.contentWindow.onload = function() {
+	editable = iframe.contentDocument.body;
+	new Edit.EditArea(editable);
 
-Edit.linkCallback = function(rangeText) {
-	alert(rangeText);
-	return '#';
+	Edit.linkCallback = function(rangeText) {
+		alert(rangeText);
+		return '#';
+	};
+	Edit.imageCallback = function() {
+		Edit.Actions.imageAction({src: 'smile.png', width: 75, height: 75});
+	};
+
+	read_input();
+	editable.focus();
 };
-Edit.imageCallback = function() {
-	Edit.Actions.imageAction({src: 'smile.png', width: 75, height: 75});
-};
-
-read_input();
-editable.focus();
+if (iframe.contentDocument.readyState == 'complete') { // chrome
+	iframe.contentWindow.onload();
+}
 
 /* exported read_input, write_output */
 function read_input() {
@@ -68,6 +76,10 @@ function read_input() {
 	}
 }
 function write_output() {
+	if (editable.editArea.content._placeholder) {
+		output.value = '';
+		return;
+	}
 	var content = editable.editArea.content.cloneNode(true);
 	var images = content.querySelectorAll('img');
 	for (var i = 0; i < images.length; i++) {

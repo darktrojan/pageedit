@@ -182,7 +182,10 @@
 			button.textContent = text;
 			group.appendChild(button);
 			button.onmousedown = Edit.saveSelection;
-			button.onmouseup = Edit.restoreSelection;
+			button.onmouseup = function() {
+				Edit.restoreSelection();
+				Edit.currentBlock.focus();
+			};
 			if (image) {
 				var img = document.createElement('img');
 				img.src = scriptPath + 'icons/' + image;
@@ -226,7 +229,7 @@
 			if (!Edit.currentBlock) {
 				return;
 			}
-			document.execCommand(command, false, value);
+			Edit.currentDocument.execCommand(command, false, value);
 		},
 		linkAction: function() {
 			var button = ToolbarUI.buttons.link;
@@ -348,22 +351,7 @@
 		},
 		imageAction: function(imageAttributes) {
 			Edit.restoreSelection();
-			setTimeout(function() {
-				var block = Edit.getBlockNodeForSelection();
-				var newBlock = document.createElement('div');
-				// newBlock.setAttribute('draggable', 'true');
-				// newBlock.contentEditable = false;
-				var image = document.createElement('img');
-				image.setAttribute('src', imageAttributes.src);
-				if (imageAttributes.width) {
-					image.setAttribute('width', imageAttributes.width);
-				}
-				if (imageAttributes.height) {
-					image.setAttribute('height', imageAttributes.height);
-				}
-				newBlock.appendChild(image);
-				block.parentNode.insertBefore(newBlock, block);
-			}, 0);
+			Edit.currentDocument.execCommand('insertImage', null, imageAttributes.src);
 		}
 	};
 
@@ -379,41 +367,46 @@
 			this.content.classList.add(CLASS_EDIT_BLOCK);
 			this.content.onclick = Edit.updateUI;
 			this.content.contentEditable = true;
-			this.content.onfocus = function() {
-				Edit.setCurrentBlock(this);
 
-				if (this._placeholder) {
-					var selection = window.getSelection();
+			var content = this.content;
+			var contentDocument = content.ownerDocument;
+			var contentWindow = contentDocument.defaultView;
+
+			this.content.onfocus = function() {
+				Edit.setCurrentBlock(content);
+
+				if (content._placeholder) {
+					var selection = contentWindow.getSelection();
 					selection.removeAllRanges();
-					var r = document.createRange();
-					r.selectNodeContents(this._placeholder);
+					var r = contentDocument.createRange();
+					r.selectNodeContents(content._placeholder);
 					selection.addRange(r);
 				}
-				this.classList.remove(CLASS_PLACEHOLDER);
+				content.classList.remove(CLASS_PLACEHOLDER);
 			};
 			this.content.onblur = function() {
-				for (var i = 0; i < this.childNodes.length; i++) {
-					var node = this.childNodes[i];
+				for (var i = 0; i < content.childNodes.length; i++) {
+					var node = content.childNodes[i];
 					if (node.nodeType == Node.TEXT_NODE) {
 						if (node.nodeValue.trim()) {
-							var p = document.createElement('p');
+							var p = contentDocument.createElement('p');
 							p.textContent = node.nodeValue;
-							this.replaceChild(p, node);
+							content.replaceChild(p, node);
 						} else {
 							node.remove();
 							i--;
 						}
 					}
 				}
-				delete this._placeholder;
-				this.classList.remove(CLASS_PLACEHOLDER);
-				if (this.textContent == '') {
-					this.innerHTML = '<p>Edit this text</p>';
-					this._placeholder = this.firstChild;
-					this.classList.add(CLASS_PLACEHOLDER);
-				} else if (this.textContent == 'Edit this text') {
-					this._placeholder = this.firstChild;
-					this.classList.add(CLASS_PLACEHOLDER);
+				delete content._placeholder;
+				content.classList.remove(CLASS_PLACEHOLDER);
+				if (content.textContent == '') {
+					content.innerHTML = '<p>Edit this text</p>';
+					content._placeholder = content.firstChild;
+					content.classList.add(CLASS_PLACEHOLDER);
+				} else if (content.textContent == 'Edit this text') {
+					content._placeholder = content.firstChild;
+					content.classList.add(CLASS_PLACEHOLDER);
 				}
 
 				setTimeout(function() {
@@ -452,64 +445,21 @@
 				}
 			};
 			this.content.onkeyup = function() {
-				if (this.textContent == '') {
-					this.innerHTML = '';
-					var p = document.createElement('p');
+				if (content.textContent == '') {
+					content.innerHTML = '';
+					var p = contentDocument.createElement('p');
 					p.textContent = 'Edit this text';
-					this.appendChild(p);
-					this._placeholder = p;
+					content.appendChild(p);
+					content._placeholder = p;
 
-					var selection = window.getSelection();
+					var selection = contentWindow.getSelection();
 					selection.removeAllRanges();
-					var r = document.createRange();
+					var r = contentDocument.createRange();
 					r.selectNodeContents(p);
 					selection.addRange(r);
 				}
 				Edit.updateUI();
 			};
-			var draggedThing = null;
-			this.content.ondragstart = function(event) {
-				// console.log(event);
-				if (event.target.localName == 'img') {
-					event.dataTransfer.effectAllowed = 'move';
-					event.dataTransfer.clearData();
-					event.dataTransfer.setData('text/html', event.target.parentNode.outerHTML);
-					draggedThing = event.target.parentNode;
-				}
-				// console.log(event);
-			};
-			this.content.ondragenter = function(event) {
-				event.preventDefault();
-			};
-			this.content.ondrop = function(event) {
-				event.preventDefault();
-
-				var target = event.target;
-				// console.log(target);
-				if (this.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_CONTAINED_BY) {
-					while (target.parentNode != this) {
-						target = target.parentNode;
-						// console.log(target);
-					}
-					this.insertBefore(draggedThing, target);
-					return;
-				}
-
-				var bottom = this.getBoundingClientRect().bottom;
-				for (var i = event.clientY; i < bottom; i += 5) {
-					target = document.elementFromPoint(event.clientX, i);
-					// console.log(i, target);
-					if (target != this) {
-						while (target.parentNode != this) {
-							target = target.parentNode;
-						}
-						this.insertBefore(draggedThing, target);
-						return;
-					}
-				}
-				this.appendChild(draggedThing);
-			};
-
 
 			if (this.content.textContent == '') {
 				this.content.innerHTML = '<p>Edit this text</p>';
@@ -532,14 +482,11 @@
 			this.content.innerHTML = html;
 			delete this.content._placeholder;
 			this.content.classList.remove(CLASS_PLACEHOLDER);
-			var images = this.content.querySelectorAll('div > img');
-			for (var i = 0; i < images.length; i++) {
-				var div = images[i].parentNode;
-				div.setAttribute('draggable', 'true');
-				div.contentEditable = false;
-			}
 		},
 		output: function() {
+			if (this.content._placeholder) {
+				return '';
+			}
 			return Serializer.serialize(this.content);
 		}
 	};
@@ -617,6 +564,7 @@
 	var Edit = {
 		scriptPath: scriptPath,
 		currentBlock: null,
+		currentWindow: null,
 		savedRange: null,
 
 		Actions: Actions,
@@ -635,9 +583,11 @@
 			this.currentBlock = div;
 			this.range = null;
 			if (this.currentBlock) {
+				this.currentWindow = div.ownerDocument.defaultView;
 				this.currentBlock.classList.add(CLASS_CURRENT);
 				ToolbarUI.show();
 			} else {
+				this.currentWindow = null;
 				ToolbarUI.hide();
 				ToolbarUI.setInactive();
 			}
@@ -708,7 +658,7 @@
 				node = node.parentNode;
 			} while (node && !node.classList.contains(CLASS_EDIT_BLOCK));
 
-			var alignment = (blockNode.style && blockNode.style.textAlign) || blockNode.align || 'left';
+			var alignment = blockNode.style.textAlign || blockNode.align || 'left';
 
 			// console.log([collapsed, leafNode, blockNode, bold, italic, underline, alignment, link, uList, oList, image]);
 
@@ -720,16 +670,16 @@
 			ToolbarUI.setButtonState('bold', bold, collapsed || image);
 			ToolbarUI.setButtonState('italic', italic, collapsed || image);
 			ToolbarUI.setButtonState('underline', underline, collapsed || image);
-			ToolbarUI.setButtonState('justifyleft', alignment == 'left', image);
-			ToolbarUI.setButtonState('justifycenter', alignment == 'center', image);
-			ToolbarUI.setButtonState('justifyright', alignment == 'right', image);
-			ToolbarUI.setButtonState('justifyfull', alignment == 'justify', image);
+			ToolbarUI.setButtonState('justifyleft', alignment == 'left', false);
+			ToolbarUI.setButtonState('justifycenter', alignment == 'center', false);
+			ToolbarUI.setButtonState('justifyright', alignment == 'right', false);
+			ToolbarUI.setButtonState('justifyfull', alignment == 'justify', false);
 			ToolbarUI.setButtonState('link', link, (image || collapsed) && !link);
 			ToolbarUI.setButtonState('ulist', uList, image);
 			ToolbarUI.setButtonState('olist', oList, image);
 			ToolbarUI.setButtonState('indent', false, !uList && !oList);
 			ToolbarUI.setButtonState('outdent', false, !uList && !oList);
-			ToolbarUI.setButtonState('image', false, image);
+			ToolbarUI.setButtonState('image', false, false);
 
 			NodeTypeUI.setNodeType(blockNode.localName);
 		},
@@ -741,22 +691,25 @@
 			}
 
 			node = range.startContainer;
-			// if (node.nodeType == Node.ELEMENT_NODE) {
-			// 	node = node.childNodes[range.startOffset];
-			// }
-
-			var blockNode = null;
-			while (node) {
-				if (node.nodeType == Node.ELEMENT_NODE && node.classList.contains(CLASS_EDIT_BLOCK)) {
-					break;
+			if (node.nodeType == Node.ELEMENT_NODE && node.classList.contains(CLASS_EDIT_BLOCK)) {
+				if (range.startOffset == 0) {
+					return node.firstElementChild;
+				} else {
+					return node.lastElementChild;
 				}
-				blockNode = node;
-				node = node.parentNode;
 			}
-			return blockNode;
+
+			do {
+				if (node.nodeType == Node.ELEMENT_NODE && node.matches('.' + CLASS_EDIT_BLOCK + ' > *')) {
+					return node;
+				}
+				node = node.parentNode;
+			} while (node);
+
+			return null;
 		},
 		getRange: function() {
-			var selection = window.getSelection();
+			var selection = this.currentWindow.getSelection();
 			if (selection.rangeCount) {
 				return selection.getRangeAt(0);
 			}
@@ -770,11 +723,15 @@
 				return;
 			}
 
-			var selection = window.getSelection();
+			var selection = this.currentWindow.getSelection();
 			selection.removeAllRanges();
 			selection.addRange(Edit.savedRange);
 			// Edit.currentBlock.focus();
-			Edit.savedRange.startContainer.focus();
+			if (Edit.savedRange.startContainer.nodeType == Node.ELEMENT_NODE) {
+				Edit.savedRange.startContainer.focus();
+			} else {
+				Edit.savedRange.startContainer.parentNode.focus();
+			}
 			setTimeout(Edit.updateUI, 0);
 		}
 	};
