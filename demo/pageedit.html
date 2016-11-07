@@ -17,12 +17,20 @@ h1, h2, h3 {
 	flex: 1;
 	margin: 1em;
 }
+#right {
+	display: flex;
+	flex-direction: column;
+}
 textarea {
 	width: 100%;
-	height: 400px;
+	height: 250px;
 	box-sizing: border-box;
 	white-space: pre-wrap;
 	resize: vertical;
+}
+#info {
+	height: 15em;
+	background-color: red;
 }
 </style>
 </head>
@@ -31,9 +39,14 @@ textarea {
 <div style="display: flex">
 	<div id="left"></div>
 	<div id="right">
-		<button onclick="read_input();">Read HTML</button>
-		<button onclick="write_output();">Display HTML</button><br />
+		<div>
+			<button onclick="read_input();">Read HTML</button>
+			<button onclick="write_output();">Display HTML</button>
+		</div>
 		<textarea id="output"><h1><i>L</i>orem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</h1><p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p><p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p><h3>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</h3><p>Italic: <i>italic</i>, <em>italic</em>.</p><p>Bold: <b>bold</b>, <strong>bold</strong>.</p><p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p><ul><li>Duis aute irure</li><li>dolor in reprehenderit</li><li>in voluptate velit esse cillum</li><li>dolore eu fugiat nulla pariatur.</li></ul></textarea>
+		<div id="info" class="edit_ui">
+			<p>Clicking in this block should not hide the toolbar.</p>
+		</div>
 	</div>
 </div>
 

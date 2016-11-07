@@ -1,7 +1,7 @@
 (function() {
 	var blocks = ['h1', 'h2', 'h3', 'p', 'ul', 'ol', 'div', 'li'];
 
-	var CLASS_EDIT_BLOCK = 'edit_block', CLASS_SHOWN = 'edit_shown', CLASS_CURRENT = 'edit_current';
+	var CLASS_EDIT_BLOCK = 'edit_block', CLASS_SHOWN = 'edit_shown';
 	var CLASS_SELECTED = 'edit_selected', CLASS_PLACEHOLDER = 'edit_placeholder';
 
 	var scriptPath = '';
@@ -95,6 +95,7 @@
 		init: function() {
 			this.element = document.createElement('div');
 			this.element.id = 'edit_toolbar';
+			this.element.classList.add('edit_ui');
 			document.body.appendChild(this.element);
 
 			this.element.appendChild(NodeTypeUI.init());
@@ -232,6 +233,9 @@
 			Edit.currentWindow.document.execCommand(command, false, value);
 		},
 		linkAction: function() {
+			if (!Edit.currentBlock) {
+				return;
+			}
 			var button = ToolbarUI.buttons.link;
 			if (button.classList.contains(CLASS_SELECTED)) {
 				var node = Edit.savedRange.startContainer;
@@ -268,6 +272,9 @@
 			}
 		},
 		listAction: function(listType) {
+			if (!Edit.currentBlock) {
+				return;
+			}
 			var currentListType = null;
 			if (ToolbarUI.buttons.ulist.classList.contains(CLASS_SELECTED)) {
 				currentListType = 'ul';
@@ -350,8 +357,16 @@
 			}
 		},
 		imageAction: function(imageAttributes) {
+			if (!Edit.currentBlock) {
+				return;
+			}
 			Edit.restoreSelection();
 			Edit.currentWindow.document.execCommand('insertImage', null, imageAttributes.src);
+			var range = Edit.currentWindow.getSelection().getRangeAt(0);
+			range.setStart(range.startContainer, range.startOffset - 1);
+			var image = range.startContainer.childNodes[range.startOffset];
+			image.setAttribute('width', imageAttributes.width);
+			image.setAttribute('height', imageAttributes.height);
 		}
 	};
 
@@ -372,7 +387,7 @@
 			var contentDocument = content.ownerDocument;
 			var contentWindow = contentDocument.defaultView;
 
-			this.content.onfocus = function() {
+			contentWindow.onfocus = function() {
 				Edit.setCurrentBlock(content);
 
 				if (content._placeholder) {
@@ -384,7 +399,7 @@
 				}
 				content.classList.remove(CLASS_PLACEHOLDER);
 			};
-			this.content.onblur = function() {
+			contentWindow.onblur = function() {
 				for (var i = 0; i < content.childNodes.length; i++) {
 					var node = content.childNodes[i];
 					if (node.nodeType == Node.TEXT_NODE) {
@@ -408,23 +423,6 @@
 					content._placeholder = content.firstChild;
 					content.classList.add(CLASS_PLACEHOLDER);
 				}
-
-				setTimeout(function() {
-					var element = document.activeElement;
-					while (element) {
-						if (element.nodeType == Node.ELEMENT_NODE) {
-							if (element.classList.contains(CLASS_EDIT_BLOCK)) {
-								Edit.setCurrentBlock(element);
-								return;
-							}
-							if (element.id == 'edit_toolbar') {
-								return;
-							}
-						}
-						element = element.parentNode;
-					}
-					Edit.setCurrentBlock(null);
-				}, 0);
 			};
 			this.content.onkeypress = function(event) {
 				if (event.ctrlKey) {
@@ -577,14 +575,10 @@
 			if (div == this.currentBlock) {
 				return;
 			}
-			if (this.currentBlock) {
-				this.currentBlock.classList.remove(CLASS_CURRENT);
-			}
 			this.currentBlock = div;
 			this.range = null;
 			if (this.currentBlock) {
 				this.currentWindow = div.ownerDocument.defaultView;
-				this.currentBlock.classList.add(CLASS_CURRENT);
 				ToolbarUI.show();
 			} else {
 				this.currentWindow = null;
@@ -594,6 +588,10 @@
 		},
 		updateUI: function() {
 			var range = Edit.getRange();
+			if (!range) {
+				ToolbarUI.setInactive();
+				return;
+			}
 			var node = range.startContainer;
 			var collapsed = range.collapsed;
 
@@ -606,6 +604,7 @@
 			}
 
 			if (!node) {
+				ToolbarUI.setInactive();
 				return;
 			}
 
@@ -739,6 +738,22 @@
 	};
 
 	ToolbarUI.init();
+
+	function listener(event) {
+		if (!Edit.currentBlock) {
+			return;
+		}
+		var ui = document.querySelectorAll('.edit_ui');
+		for (var i = 0; i < ui.length; i++) {
+			if (ui[i] == event.target ||
+					ui[i].compareDocumentPosition(event.target) & Node.DOCUMENT_POSITION_CONTAINED_BY) {
+				return;
+			}
+		}
+		Edit.setCurrentBlock(null);
+	}
+	document.documentElement.addEventListener('click', listener);
+	document.documentElement.addEventListener('keyup', listener);
 
 	window.Edit = Edit;
 })();
