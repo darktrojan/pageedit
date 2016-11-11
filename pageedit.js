@@ -90,7 +90,6 @@
 	var ToolbarUI = {
 		element: null,
 		buttons: {},
-		chain_display: null,
 
 		init: function() {
 			this.element = document.createElement('div');
@@ -132,10 +131,6 @@
 			group = document.createElement('span');
 			this.element.appendChild(group);
 			this.addButton(group, 'image', null, 'picture.png');
-
-			this.chain_display = document.createElement('div');
-			this.chain_display.id = 'edit_chain';
-			this.element.appendChild(this.chain_display);
 
 			this.element.addEventListener('mousedown', function(event) {
 				if (event.target == this) {
@@ -199,15 +194,7 @@
 			this.buttons[button].classList[selected ? 'add' : 'remove'](CLASS_SELECTED);
 			this.buttons[button].disabled = disabled;
 		},
-		setChain: function(text, bold, italic, underline, link) {
-			this.chain_display.textContent = text;
-			this.chain_display.style.fontWeight = bold ? 'bold' : 'normal';
-			this.chain_display.style.fontStyle = italic ? 'italic' : 'normal';
-			this.chain_display.style.textDecoration = underline ? 'underline' : 'none';
-			this.chain_display.style.color = link ? 'blue' : '';
-		},
 		setInactive: function() {
-			this.setChain('', false, false, false, false);
 			this.setButtonState('bold', false, true);
 			this.setButtonState('italic', false, true);
 			this.setButtonState('underline', false, true);
@@ -238,24 +225,27 @@
 			}
 			var button = ToolbarUI.buttons.link;
 			if (button.classList.contains(CLASS_SELECTED)) {
+				var range = Edit.getRange();
+				if (!range) {
+					return;
+				}
 				var node = Edit.savedRange.startContainer;
-				if (node.nodeType == Node.TEXT_NODE && Edit.savedRange.startOffset == node.length && node.nextSibling) {
-					node = node.nextSibling;
+				if (node == range.endContainer &&
+						node.nodeType == Node.ELEMENT_NODE &&
+						range.startOffset == range.endOffset - 1) {
+					node = node.childNodes[range.startOffset];
 				}
-				if (node.childNodes.length == 1) {
-					node = node.firstChild;
-				}
-				if (node.nodeType == Node.ELEMENT_NODE) {
-					node = node.childNodes[Edit.savedRange.startOffset];
-				}
-				while (node) {
-					if (node.nodeType == Node.ELEMENT_NODE && node.localName == 'a') {
-						break;
+
+				while (node && node.parentNode.localName != 'body') {
+					if (node.nodeType == Node.ELEMENT_NODE) {
+						if (node.localName == 'a') {
+							range.selectNode(node);
+							this.action('unlink', null);
+							break;
+						}
 					}
 					node = node.parentNode;
 				}
-				Edit.savedRange.selectNode(node);
-				this.action('unlink', null);
 			} else {
 				var returnedHref;
 				if (typeof Edit.linkCallback == 'function') {
@@ -270,6 +260,7 @@
 					this.action('createlink', returnedHref);
 				}
 			}
+			Edit.updateUI();
 		},
 		linkAction: function(linkAttributes) {
 			if (!Edit.currentBlock) {
@@ -292,6 +283,7 @@
 			if (linkAttributes.target) {
 				link.setAttribute('target', linkAttributes.target);
 			}
+			Edit.updateUI();
 		},
 		listAction: function(listType) {
 			if (!Edit.currentBlock) {
@@ -618,95 +610,60 @@
 				ToolbarUI.setInactive();
 				return;
 			}
+
 			var node = range.startContainer;
 			var collapsed = range.collapsed;
+			var doc = node.ownerDocument;
 
-			if (node.nodeType == Node.ELEMENT_NODE) {
+			if (node == range.endContainer &&
+					node.nodeType == Node.ELEMENT_NODE &&
+					range.startOffset == range.endOffset - 1) {
 				node = node.childNodes[range.startOffset];
-			} else if (node.nodeType == Node.TEXT_NODE && range.startOffset == node.length && node.nextSibling) {
-				node = node.nextSibling;
-			} else if (node.childNodes.length == 1) {
-				node = node.firstChild;
 			}
 
-			if (!node) {
-				ToolbarUI.setInactive();
-				return;
+			var alignment = 'left';
+			if (doc.queryCommandState('justifycenter')) {
+				alignment = 'center';
+			} else if (doc.queryCommandState('justifyright')) {
+				alignment = 'right';
+			} else if (doc.queryCommandState('justifyfull')) {
+				alignment = 'justify';
 			}
 
-			var chain = [];
-			var blockNode = null;
-			var bold = false;
-			var italic = false;
-			var underline = false;
+			var bold = doc.queryCommandState('bold');
+			var italic = doc.queryCommandState('italic');
+			var underline = doc.queryCommandState('underline');
 			var link = false;
-			var uList = false;
-			var oList = false;
-			var image = node.nodeType == Node.ELEMENT_NODE && node.localName == 'img';
+			var uList = doc.queryCommandState('insertUnorderedList');
+			var oList = doc.queryCommandState('insertOrderedList');
+			var image = false;
 
-			do {
-				var name;
+			while (node && node.parentNode.localName != 'body') {
 				if (node.nodeType == Node.ELEMENT_NODE) {
-					name = node.localName;
-					if (node.id) {
-						name += '#' + node.id;
-					}
-					if (node.classList) {
-						for (var i = 0; i < node.classList.length; i++) {
-							name += '.' + node.classList[i];
-						}
-					}
-					if (node.localName == 'b' || node.localName == 'strong' || node.style.fontWeight == 'bold') {
-						bold = true;
-					}
-					if (node.localName == 'i' || node.localName == 'em' || node.style.fontStyle == 'italic') {
-						italic = true;
-					}
-					if (node.localName == 'u' || node.style.textDecoration == 'underline') {
-						underline = true;
-					}
 					if (node.localName == 'a') {
 						link = true;
+					} else if (node.localName == 'img') {
+						image = true;
 					}
-					if (node.localName == 'ul' && !oList) {
-						uList = true;
-					}
-					if (node.localName == 'ol' && !uList) {
-						oList = true;
-					}
-				} else if (node.nodeType == Node.TEXT_NODE) {
-					name = '#text';//(' + node.length + ')';
 				}
-
-				chain.push(name);
-				blockNode = node;
 				node = node.parentNode;
-			} while (node && !node.classList.contains(CLASS_EDIT_BLOCK));
+			}
 
-			var alignment = blockNode.style && blockNode.style.textAlign || blockNode.align || 'left';
-
-			// console.log([collapsed, leafNode, blockNode, bold, italic, underline, alignment, link, uList, oList, image]);
-
-			ToolbarUI.setChain(
-				chain.reverse().join(' > ') + ' [' + blockNode.localName + ', ' + alignment + ']',
-				bold, italic, underline, link
-			);
-
-			ToolbarUI.setButtonState('bold', bold, collapsed || image);
-			ToolbarUI.setButtonState('italic', italic, collapsed || image);
-			ToolbarUI.setButtonState('underline', underline, collapsed || image);
+			ToolbarUI.setButtonState('bold', bold, image);
+			ToolbarUI.setButtonState('italic', italic, image);
+			ToolbarUI.setButtonState('underline', underline, image);
 			ToolbarUI.setButtonState('justifyleft', alignment == 'left', false);
 			ToolbarUI.setButtonState('justifycenter', alignment == 'center', false);
 			ToolbarUI.setButtonState('justifyright', alignment == 'right', false);
 			ToolbarUI.setButtonState('justifyfull', alignment == 'justify', false);
-			ToolbarUI.setButtonState('link', link, (image || collapsed) && !link);
+			ToolbarUI.setButtonState('link', link, collapsed && !link);
 			ToolbarUI.setButtonState('ulist', uList, image);
 			ToolbarUI.setButtonState('olist', oList, image);
 			ToolbarUI.setButtonState('indent', false, !uList && !oList);
 			ToolbarUI.setButtonState('outdent', false, !uList && !oList);
 			ToolbarUI.setButtonState('image', false, false);
 
-			NodeTypeUI.setNodeType(blockNode.localName);
+			NodeTypeUI.setNodeType(node ? node.localName : null);
 		},
 		getBlockNodeForSelection: function() {
 			var node;
