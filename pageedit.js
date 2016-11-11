@@ -157,7 +157,7 @@
 					Actions.action(id.substring(5), null);
 					return;
 				case 'edit_link':
-					Actions.linkAction();
+					Actions.linkCallbackAction();
 					return;
 				case 'edit_ulist':
 				case 'edit_olist':
@@ -232,7 +232,7 @@
 			}
 			Edit.currentWindow.document.execCommand(command, false, value);
 		},
-		linkAction: function() {
+		linkCallbackAction: function() {
 			if (!Edit.currentBlock) {
 				return;
 			}
@@ -269,6 +269,28 @@
 				if (returnedHref) {
 					this.action('createlink', returnedHref);
 				}
+			}
+		},
+		linkAction: function(linkAttributes) {
+			if (!Edit.currentBlock) {
+				return;
+			}
+			Edit.restoreSelection();
+			Edit.currentWindow.document.execCommand('createlink', null, linkAttributes.href);
+			var range = Edit.currentWindow.getSelection().getRangeAt(0);
+
+			var link;
+			if (range.startContainer.nodeType == Node.TEXT_NODE && range.startContainer == range.endContainer) {
+				link = range.startContainer.parentNode;
+			} else {
+				link = range.startContainer.childNodes[range.startOffset];
+				range.selectNodeContents(link);
+			}
+			if (!(link instanceof HTMLAnchorElement)) {
+				throw 'Something odd happened.';
+			}
+			if (linkAttributes.target) {
+				link.setAttribute('target', linkAttributes.target);
 			}
 		},
 		listAction: function(listType) {
@@ -361,12 +383,16 @@
 				return;
 			}
 			Edit.restoreSelection();
-			Edit.currentWindow.document.execCommand('insertImage', null, imageAttributes.src);
-			var range = Edit.currentWindow.getSelection().getRangeAt(0);
-			range.setStart(range.startContainer, range.startOffset - 1);
-			var image = range.startContainer.childNodes[range.startOffset];
+
+			var image = Edit.currentWindow.document.createElement('img');
+			image.src = imageAttributes.src;
 			image.setAttribute('width', imageAttributes.width);
 			image.setAttribute('height', imageAttributes.height);
+
+			var range = Edit.currentWindow.getSelection().getRangeAt(0);
+			range.deleteContents();
+			range.insertNode(image);
+			range.selectNode(image);
 		}
 	};
 
@@ -657,7 +683,7 @@
 				node = node.parentNode;
 			} while (node && !node.classList.contains(CLASS_EDIT_BLOCK));
 
-			var alignment = blockNode.style.textAlign || blockNode.align || 'left';
+			var alignment = blockNode.style && blockNode.style.textAlign || blockNode.align || 'left';
 
 			// console.log([collapsed, leafNode, blockNode, bold, italic, underline, alignment, link, uList, oList, image]);
 
