@@ -63,6 +63,7 @@
 
 			Edit.restoreSelection();
 			Edit.Actions.action('formatblock', target.dataset.tag);
+			Edit.currentBlock.focus();
 
 			this.button.textContent = target.textContent;
 			this.dropdown.classList.remove(CLASS_SHOWN);
