@@ -555,7 +555,9 @@
 					str += ' ' + attribute.name + '=';
 					str += '"' + attribute.value + '"';
 				}
-				if (['br', 'hr', 'img', 'input', 'link', 'meta'].indexOf(node.localName) >= 0 && node.childNodes.length == 0) {
+				if (node.localName == 'hr') {
+					return str + '/>\n';
+				} else if (['br', 'img', 'input', 'link', 'meta'].indexOf(node.localName) >= 0 && node.childNodes.length == 0) {
 					return str + '/>';
 				}
 				str += '>';
