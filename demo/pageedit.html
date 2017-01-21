@@ -69,7 +69,10 @@ iframe.contentWindow.onload = function() {
 		alert(rangeText);
 		return '#';
 	};
-	Edit.imageCallback = function() {
+	Edit.imageCallback = function(existing) {
+		if (existing) {
+			alert('We have an image: ' + existing.src);
+		}
 		Edit.Actions.imageAction({src: 'smile.png', width: 75, height: 75});
 	};
 

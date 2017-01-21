@@ -366,7 +366,19 @@
 		imageCallbackAction: function() {
 			if (typeof Edit.imageCallback == 'function') {
 				Edit.saveSelection();
-				Edit.imageCallback();
+				var existing;
+				var range = Edit.savedRange;
+				if (range && range.startContainer.nodeType == Node.ELEMENT_NODE) {
+					if (range.startContainer instanceof HTMLImageElement) {
+						existing = range.startContainer;
+					} else {
+						var child = range.startContainer.childNodes[range.startOffset];
+						if (child instanceof HTMLImageElement) {
+							existing = child;
+						}
+					}
+				}
+				Edit.imageCallback(existing);
 			} else {
 				console.error('No Edit.imageCallback.');
 			}
@@ -374,6 +386,9 @@
 		imageAction: function(imageAttributes) {
 			if (!Edit.currentBlock) {
 				return;
+			}
+			if (!imageAttributes.src) {
+				throw 'No image src';
 			}
 			Edit.restoreSelection();
 
