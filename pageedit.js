@@ -27,6 +27,7 @@
 			this.container.id = 'edit_nodetype_container';
 			this.container.onmousedown = Edit.saveSelection;
 			this.button = document.createElement('button');
+			this.button.type = 'button';
 			this.button.id = 'edit_nodetype_button';
 			this.button.textContent = '\u00a0';
 			this.container.appendChild(this.button);
@@ -175,6 +176,7 @@
 		},
 		addButton: function(group, name, text, image) {
 			var button = document.createElement('button');
+			button.type = 'button';
 			button.id = 'edit_' + name;
 			button.textContent = text;
 			group.appendChild(button);
@@ -413,13 +415,14 @@
 		init: function() {
 			this.content.editArea = this;
 
-			this.content.classList.add(CLASS_EDIT_BLOCK);
-			this.content.onclick = Edit.updateUI;
-			this.content.contentEditable = true;
-
 			var content = this.content;
 			var contentDocument = content.ownerDocument;
 			var contentWindow = contentDocument.defaultView;
+
+			this.content.classList.add(CLASS_EDIT_BLOCK);
+			var listenerElement = content == contentDocument.body ? contentDocument.documentElement : content;
+			listenerElement.onclick = Edit.updateUI;
+			this.content.contentEditable = true;
 
 			contentWindow.onfocus = function() {
 				Edit.setCurrentBlock(content);
@@ -458,7 +461,7 @@
 					content.classList.add(CLASS_PLACEHOLDER);
 				}
 			};
-			this.content.onkeypress = function(event) {
+			listenerElement.onkeypress = function(event) {
 				if (event.ctrlKey) {
 					switch (event.charCode) {
 					case 98:
@@ -476,7 +479,7 @@
 					}
 				}
 			};
-			this.content.onkeyup = function() {
+			listenerElement.onkeyup = function() {
 				if (content.textContent == '') {
 					content.innerHTML = '';
 					var p = contentDocument.createElement('p');
